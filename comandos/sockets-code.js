@@ -11,31 +11,34 @@ const codeCommand = {
     isAdmin: false,
     isGroup: false,
 
-    run: async (conn, m, { senderNumber }) => {
+    run: async (conn, m, { prefix, args }) => {
         const from = m.key.remoteJid;
 
-        // 1. Cooldown
+        // 1. Validar que puso el número
+        if (!args[0]) {
+            return await conn.sendMessage(from, { 
+                text: `⚠️ *Uso Incorrecto*\n\nPor favor, ingresa el número de teléfono con el código de país.\n\nEjemplo: *${prefix}code 1849XXXXXXX*` 
+            }, { quoted: m });
+        }
+
+        // Limpiar el número de caracteres extra
+        let targetNumber = args[0].replace(/[^0-9]/g, '');
+
+        // 2. Cooldown para evitar spam
         const now = Date.now();
-        if (cooldowns.has(from) && (now < cooldowns.get(from) + 60000)) return;
+        if (cooldowns.has(from) && (now < cooldowns.get(from) + 60000)) {
+            const timeLeft = Math.round(((cooldowns.get(from) + 60000) - now) / 1000);
+            return await conn.sendMessage(from, { text: `[✿︎] Debes esperar *${timeLeft}s* para reintentar.` });
+        }
 
         try {
-            // --- TRUCO ANTI-LID ---
-            // Intentamos obtener el número real si lo que recibimos es un LID
-            let realNumber = senderNumber; 
-            if (from.includes(':') || senderNumber.length > 15) {
-                // Si parece un LID, intentamos extraer el número del JID decodificado
-                const decoded = conn.decodeJid(m.key.participant || from);
-                realNumber = decoded.split('@')[0].split(':')[0];
-            }
-            // Limpieza final de seguridad
-            realNumber = realNumber.replace(/[^0-9]/g, '');
-
+            // Mensaje de instrucciones
             const msgInstrucciones = await conn.sendMessage(from, { 
-                text: `✿︎ \`Vinculación del socket\` ✿︎\n\n*❁* \`Pasos a seguir:\` \nDispositivos vinculados > vincular nuevo dispositivo > Vincular con numero de telefono > ingresa el codigo.\n\n\`Nota\` » El código es válido por *60 segundos*.`,
+                text: `✿︎ \`Vinculación del socket\` ✿︎\n\n*❁* \`Pasos a seguir:\` \nDispositivos vinculados > vincular nuevo dispositivo > Vincular con número de teléfono > ingresa el código.\n\n\`Nota\` » El código es válido por *60 segundos*.`,
                 contextInfo: {
                     externalAdReply: {
                         title: 'INSTRUCCIONES DE CONEXIÓN',
-                        body: 'Sigue los pasos para ser Sub-Bot',
+                        body: `Solicitando código para: ${targetNumber}`,
                         thumbnailUrl: 'https://files.catbox.moe/9ssbf9.jpg',
                         mediaType: 1,
                         renderLargerThumbnail: false
@@ -43,18 +46,20 @@ const codeCommand = {
                 }
             }, { quoted: m });
 
-            // Iniciamos el sub-bot usando el JID real para la carpeta
-            const jidReal = `${realNumber}@s.whatsapp.net`;
+            // Iniciamos la instancia del sub-bot con el número manual
+            const jidReal = `${targetNumber}@s.whatsapp.net`;
             const sock = await startSubBot(jidReal, conn);
 
-            // IMPORTANTE: Pedimos el código con el número limpio (sin LID)
-            let code = await sock.requestPairingCode(realNumber);
+            // Pedir el código directamente al número colocado
+            let code = await sock.requestPairingCode(targetNumber);
             code = code?.match(/.{1,4}/g)?.join('-') || code;
 
+            // Enviamos el código solo
             const msgCodigo = await conn.sendMessage(from, { text: code }, { quoted: msgInstrucciones });
 
             cooldowns.set(from, now);
 
+            // Borrado automático
             setTimeout(async () => {
                 try {
                     await conn.sendMessage(from, { delete: msgInstrucciones.key });
@@ -64,7 +69,9 @@ const codeCommand = {
 
         } catch (err) {
             console.error('Error en comando code:', err);
-            await conn.sendMessage(from, { text: '❌ Ocurrió un error al generar el código. Asegúrate de no tener una sesión activa.' });
+            await conn.sendMessage(from, { 
+                text: `❌ *Error:* No se pudo generar el código para el número *${targetNumber}*.\n\nVerifica que el número sea correcto y tenga el formato internacional.` 
+            });
         }
     }
 };
