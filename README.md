@@ -30,10 +30,9 @@ git pull
 npm install
 npm start
 
----
 
 ## Tabla de Comandos
-```markdown
+```mardown
 ## 📖 COMANDOS PRINCIPALES
 | Comando | Descripción |
 | :--- | :--- |
