@@ -12,22 +12,23 @@
 
 ---
 
-## 🛠️ INSTALACIÓN
+## 🛠️ INSTALACIÓN Y ACTUALIZACIÓN
 
 ### ☁️ Pterodactyl Panel
 1. Sube los archivos al panel.
-2. Asegúrate de tener el "Startup" configurado correctamente.
-3. Presiona el botón **START** y vincula tu número desde la consola.
+2. El panel instalará las dependencias automáticamente al dar a **START**.
+3. Vincula tu número siguiendo las instrucciones de la consola.
 
-### 📱 Termux / VPS
+### 📱 Termux / VPS / Actualizar
 ```bash
-# Clonar el repositorio
+# Instalación e Inicio
 git clone [https://github.com/Dev-FelixOfc/kazuma-bot.git](https://github.com/Dev-FelixOfc/kazuma-bot.git)
 cd kazuma-bot
-
-# Instalar dependencias
 npm install
+npm start
 
-# Iniciar el bot
+# Para Actualizar en el futuro
+git pull
+npm install
 npm start
 
