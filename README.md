@@ -32,3 +32,35 @@ git pull
 npm install
 npm start
 
+🤝 COLABORADORES
+<table align="center">
+<tr>
+<td align="center">
+<a href="https://gemini.google.com">
+<img src="https://www.google.com/search?q=https://files.catbox.moe/nv26l7.png" width="100px;" alt="Gemini"/><br />
+<sub><b>Gemini AI</b></sub>
+</a><br />
+🤖 <b>AI Assistant</b>
+</td>
+</tr>
+</table>
+👑 CREADOR
+<table align="center">
+<tr>
+<td align="center">
+<a href="https://www.google.com/search?q=https://github.com/Dev-FelixOfc">
+<img src="https://www.google.com/search?q=https://qu.ax/mSDR.jpg" width="120px;" alt="Félix"/><br />
+<sub><b>Félix OFC</b></sub>
+</a><br />
+👑 <b>Lead Developer</b>
+</td>
+</tr>
+</table>
+🛡️ CRÉDITOS
+Motor: Baileys
+Diseño: Félix (Inspirado en la estética Yotsuba & Dark)
+YouTube: @DustyCraft_Gaming
+<p align="center">
+<i>Desarrollado con ❤️ en República Dominicana 🇩🇴</i>
+</p>
+
