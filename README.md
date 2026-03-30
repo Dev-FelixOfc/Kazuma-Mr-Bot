@@ -8,12 +8,18 @@
 ---
 
 ## 🚀 SOBRE EL PROYECTO
-**Kazuma Bot** no es solo otro bot de WhatsApp; es una infraestructura completa de mensajería automatizada. Diseñado desde cero utilizando **Node.js** y la librería **Baileys**, este bot destaca por su sistema de **Sub-Bots (Sockets)** único, permitiendo que múltiples usuarios se vinculen al servidor principal de forma independiente y segura.
+**Kazuma Bot** es una infraestructura de mensajería automatizada de alto rendimiento. Desarrollado desde cero con **Node.js** y **Baileys**, este sistema permite la gestión de múltiples sub-bots (sockets) de manera simultánea, ofreciendo estabilidad y una interfaz estética en consola.
 
 ---
 
-## 🛠️ INSTALACIÓN (Pterodactyl / VPS)
+## 🛠️ INSTALACIÓN
 
+### ☁️ Pterodactyl Panel
+1. Sube los archivos al panel.
+2. Asegúrate de tener el "Startup" configurado correctamente.
+3. Presiona el botón **START** y vincula tu número desde la consola.
+
+### 📱 Termux / VPS
 ```bash
 # Clonar el repositorio
 git clone [https://github.com/Dev-FelixOfc/kazuma-bot.git](https://github.com/Dev-FelixOfc/kazuma-bot.git)
@@ -22,66 +28,6 @@ cd kazuma-bot
 # Instalar dependencias
 npm install
 
----
-
-## ACTUALIZACIÓN DEL SISTEMA 
-
-git pull
-npm install
+# Iniciar el bot
 npm start
 
-
-## Tabla de Comandos
-```mardown
-## 📖 COMANDOS PRINCIPALES
-| Comando | Descripción |
-| :--- | :--- |
-| `!menu` | Muestra el menú interactivo con diseño gótico/anime. |
-| `!code [número]` | Inicia el proceso de vinculación para ser Sub-Bot. |
-| `!bots` | Muestra la red de sockets activos y presentes en el grupo. |
-
----
-
-## 🤝 COLABORADORES
-Este proyecto cuenta con el apoyo de inteligencia artificial avanzada para optimizar su lógica y estructura.
-
-<table align="center">
-  <tr>
-    <td align="center">
-      <a href="https://gemini.google.com">
-        <img src="https://files.catbox.moe/nv26l7.png" width="100px;" alt="Gemini"/><br />
-        <sub><b>Gemini AI</b></sub>
-      </a><br />
-      🤖 <b>AI Assistant</b>
-    </td>
-  </tr>
-</table>
-
----
-
-## 👑 CREADOR
-El cerebro detrás de toda la arquitectura de Kazuma y la red de sockets.
-
-<table align="center">
-  <tr>
-    <td align="center">
-      <a href="https://github.com/Dev-FelixOfc">
-        <img src="https://qu.ax/mSDR.jpg" width="120px;" alt="Félix"/><br />
-        <sub><b>Félix OFC</b></sub>
-      </a><br />
-      👑 <b>Lead Developer</b>
-    </td>
-  </tr>
-</table>
-
----
-
-## 🛡️ CRÉDITOS
-* **Motor:** [Baileys](https://github.com/WhiskeySockets/Baileys)
-* **Diseño:** Félix (Inspirado en la estética Yotsuba & Dark)
-* **Canal:** [@DustyCraft_Gaming](https://youtube.com/@DustyCraft_Gaming)
-
----
-<p align="center">
-  <i>Desarrollado con ❤️ en República Dominicana 🇩🇴</i>
-</p>
