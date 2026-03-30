@@ -4,7 +4,7 @@ import path from 'path';
 
 const menuCommand = {
     name: 'menu',
-    alias: ['help', 'menú', 'ayuda'],
+    alias: ['help', 'menú', 'ayuda', 'menu'],
     category: 'main',
     isOwner: false,
     isAdmin: false,
