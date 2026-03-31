@@ -1,76 +1,85 @@
+/* KURAYAMI TEAM- SOCKET MONITOR ENGINE 
+   Desarrollado por Félix OFC para Kamuza Mister Bot
+*/
+
 import fs from 'fs';
 import path from 'path';
 
 const listSocketsCommand = {
     name: 'bots',
-    alias: ['sockets', 'subbots'],
+    alias: ['sockets', 'subbots', 'nodos'],
     category: 'sockets',
     isOwner: false,
     isAdmin: false,
-    isGroup: true, // Se enfoca en grupos para mostrar quiénes están presentes
+    isGroup: true, 
 
-    run: async (conn, m, { participants }) => {
-        const from = m.key.remoteJid;
+    run: async (conn, m) => {
+        const from = m.chat;
 
         try {
-            // 1. Conteo de archivos de sesión (Sub-Bots totales)
+            // 1. Obtener metadatos del grupo y participantes (Soporte LID)
+            const groupMetadata = await conn.groupMetadata(from);
+            // Creamos una lista limpia de JIDs de participantes, filtrando si son LIDs o JIDs normales
+            const participants = groupMetadata.participants.map(p => p.id);
+
+            // 2. Conteo de archivos de sesión (Sub-Bots totales en disco)
             const sessionsPath = path.resolve('./sesiones_subbots');
             let totalSubBots = 0;
             if (fs.existsSync(sessionsPath)) {
-                totalSubBots = fs.readdirSync(sessionsPath).length;
+                totalSubBots = fs.readdirSync(sessionsPath).filter(f => !f.startsWith('.')).length;
             }
 
-            // 2. Identificar bots en este grupo
-            // Obtenemos todos los números de los sub-bots activos en memoria
-            const activeSubBotsJids = Array.from(global.subBots.keys()); 
-            // Añadimos el bot principal a la lista de búsqueda
+            // 3. Identificar Sockets de la red Kurayami en este grupo
             const mainBotJid = conn.user.id.split(':')[0] + '@s.whatsapp.net';
-            
-            // Filtramos los participantes del grupo que coincidan con nuestra red
-            const botsInGroup = participants.filter(p => 
-                p.id === mainBotJid || activeSubBotsJids.includes(p.id)
+            const activeSubBotsJids = Array.from(global.subBots?.keys() || []); 
+
+            // Filtramos participantes que coincidan con el principal o los subbots activos
+            const botsInGroup = groupMetadata.participants.filter(p => 
+                p.id === mainBotJid || activeSubBotsJids.includes(p.id) || (p.lid && activeSubBotsJids.includes(p.lid))
             );
 
-            const countInGroup = botsInGroup.length;
-
-            // 3. Construir lista de menciones
-            let mentions = [];
+            // 4. Construir lista de menciones y cuerpo del mensaje
+            let mentionsJid = [];
             let listaMenciones = "";
-            
-            botsInGroup.forEach((bot, index) => {
-                const jid = bot.id;
-                mentions.push(jid);
-                listaMenciones += `➪ @${jid.split('@')[0]}\n`;
+
+            botsInGroup.forEach((bot) => {
+                const jid = bot.id; 
+                mentionsJid.push(jid);
+                // Usamos el JID real para la mención visual
+                listaMenciones += `   ➪ @${jid.split('@')[0]}\n`;
             });
 
-            // 4. Armar el mensaje final
+            // 5. Armar el mensaje final con estética Gótica/Neon
             const texto = `
-✿︎ \`Lista de Sockets activos\` ✿︎
+✿︎ \`LISTA DE SOCKETS ACTIVOS\` ✿︎
 
 *❁ Principal » 1*
 *❀ Sub-Bots » ${totalSubBots}*
 
-*⌨︎ En este grupo » ${countInGroup}*
+*⌨︎ Nodos en este grupo » ${botsInGroup.length}*
 
-${listaMenciones}
+${listaMenciones || "_No hay más nodos en este grupo._"}
 `.trim();
 
+            // 6. Envío con ContextInfo para que la mención brille en azul
             await conn.sendMessage(from, { 
                 text: texto,
-                mentions: mentions, // Importante para que las @ funcionen
+                mentions: mentionsJid, // Array de JIDs para que WhatsApp active el @
                 contextInfo: {
                     externalAdReply: {
                         title: 'KAZUMA - NETWORK STATUS',
-                        body: 'Lista de nodos conectados',
+                        body: 'Supervisión de Nodos Kurayami',
                         thumbnailUrl: 'https://files.catbox.moe/9ssbf9.jpg',
                         mediaType: 1,
-                        renderLargerThumbnail: false
+                        renderLargerThumbnail: false,
+                        showAdAttribution: false // Mantenemos el estilo limpio que querías
                     }
                 }
             }, { quoted: m });
 
         } catch (err) {
             console.error('Error en comando bots:', err);
+            m.reply('❌ Error al escanear la red de sockets.');
         }
     }
 };
