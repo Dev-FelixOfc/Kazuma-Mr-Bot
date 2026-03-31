@@ -22,8 +22,7 @@ export default {
 
 *Tu número/identidad limpia:* ${pureNumber}
 
-> ¡Usa esta información con cabeza!
-`.trim();
+> ¡Usa esta información con cabeza!`.trim();
 
             await conn.sendMessage(m.chat, { 
                 text: texto,
