@@ -7,7 +7,7 @@ import path from 'path';
 
 const listSocketsCommand = {
     name: 'sockets',
-    alias: ['code', 'bots', 'subbots'],
+    alias: ['sockets', 'bots', 'subbots'],
     category: 'sockets',
     isOwner: false,
     isAdmin: false,
