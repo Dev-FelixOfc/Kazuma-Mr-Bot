@@ -35,7 +35,7 @@ global.loadCommands = async () => {
     if (!fs.existsSync(commandsPath)) fs.mkdirSync(commandsPath);
     global.commands.clear();
     const files = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-    
+
     for (const file of files) {
         try {
             const filePath = path.join(commandsPath, file);
@@ -52,7 +52,10 @@ global.loadCommands = async () => {
 };
 
 async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState('sesion_bot');
+    // Si hay una sesión corrupta (la que dio el error de código), la borramos antes de empezar
+    const sessionDir = './sesion_bot';
+    
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
     const { version } = await fetchLatestBaileysVersion();
 
     // BANNER INICIAL
@@ -74,6 +77,7 @@ async function startBot() {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, P({ level: 'silent' })),
         },
+        // Mantenemos Browsers.ubuntu('Chrome') que es el que te funcionaba bien
         browser: Browsers.ubuntu('Chrome'),
         markOnlineOnConnect: true,
     });
@@ -85,7 +89,7 @@ async function startBot() {
         console.log(chalk.yellow('\n  ╔══════════════════════════════════════════╗'));
         console.log(chalk.yellow('  ║    VINCULACIÓN DEL BOT PRINCIPAL         ║'));
         console.log(chalk.yellow('  ╚══════════════════════════════════════════╝'));
-        
+
         let phoneNumber = await question(chalk.cyan('\n  [?] Introduce tu número (ej: 1849XXXXXXX):\n  > '));
         phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
 
@@ -96,15 +100,19 @@ async function startBot() {
 
         console.log(chalk.blue('\n  [⏳] Solicitando código a WhatsApp...'));
 
+        // Reducimos el tiempo de espera a 2 segundos para evitar desincronización
         setTimeout(async () => {
             try {
                 let code = await conn.requestPairingCode(phoneNumber);
                 code = code?.match(/.{1,4}/g)?.join('-') || code;
                 console.log('\n  ' + chalk.bgCyan.black.bold(` CÓDIGO: ${code} `) + '\n');
             } catch (error) {
-                console.error(chalk.red('  [!] Error:'), error);
+                console.error(chalk.red('  [!] Error al solicitar código:'), error);
+                // Si falla aquí, probablemente la sesión está corrupta. Borramos y reiniciamos.
+                if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
+                process.exit(1);
             }
-        }, 3000);
+        }, 2000);
     }
 
     conn.ev.on('creds.update', saveCreds);
@@ -114,14 +122,14 @@ async function startBot() {
 
         if (connection === 'close') {
             const isLoggedOut = lastDisconnect.error?.output?.statusCode === DisconnectReason.loggedOut;
-            
+
             if (isLoggedOut) {
                 console.log(chalk.red.bold('\n  ┌──────────────────────────────────────────┐'));
                 console.log(chalk.red.bold('  │       SESIÓN CERRADA / INVALIDADA        │'));
                 console.log(chalk.red.bold('  └──────────────────────────────────────────┘'));
-                console.log(chalk.white('  1. Borra la carpeta "sesion_bot" en Files.'));
-                console.log(chalk.white('  2. Reinicia el servidor (Restart).'));
-                console.log(chalk.white('  3. Vuelve a vincular tu número.\n'));
+                if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
+                console.log(chalk.white('  [✓] Sesión borrada automáticamente. Reiniciando...\n'));
+                startBot();
             } else {
                 console.log(chalk.yellow('  [!] Conexión perdida... reintentando.'));
                 startBot();
@@ -129,7 +137,6 @@ async function startBot() {
         } else if (connection === 'open') {
             console.log(chalk.greenBright.bold('\n  [✨] ¡CONECTADO CON ÉXITO!'));
             console.log(chalk.gray('  ' + '─'.repeat(50)));
-            // Cargar sub-bots
             await loadAllSubBots(conn);
         }
     });
@@ -138,7 +145,6 @@ async function startBot() {
         const m = chatUpdate.messages[0];
         if (!m.message || m.key.fromMe) return;
 
-        // Lógica de conteo de comandos
         const type = Object.keys(m.message)[0];
         const body = (type === 'conversation') ? m.message.conversation : 
                      (type === 'extendedTextMessage') ? m.message.extendedTextMessage.text : 
