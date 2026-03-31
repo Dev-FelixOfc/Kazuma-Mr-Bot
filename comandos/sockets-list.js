@@ -18,57 +18,60 @@ const listSocketsCommand = {
         const from = m.chat;
 
         try {
-            // 1. Obtener participantes del grupo de forma segura
-            const groupMetadata = await conn.groupMetadata(from).catch(() => null);
-            if (!groupMetadata) return; // Si no hay metadata, no responde para no dar error
-
-            const participants = groupMetadata.participants.map(p => p.id);
+            // 1. Obtener el ID del bot principal y el del grupo
             const mainBotJid = conn.user.id.split(':')[0] + '@s.whatsapp.net';
+            const groupMetadata = await conn.groupMetadata(from).catch(() => ({ participants: [] }));
+            const participants = groupMetadata.participants.map(p => p.id) || [];
 
-            // 2. Escaneo de la carpeta de sesiones
+            // 2. Escaneo SEGURO de carpetas
             const sessionsPath = path.resolve('./sesiones_subbots');
             let sessionFolders = [];
             if (fs.existsSync(sessionsPath)) {
-                sessionFolders = fs.readdirSync(sessionsPath).filter(f => {
-                    return fs.statSync(path.join(sessionsPath, f)).isDirectory() && !f.startsWith('.');
-                });
+                try {
+                    sessionFolders = fs.readdirSync(sessionsPath).filter(f => {
+                        const p = path.join(sessionsPath, f);
+                        return fs.statSync(p).isDirectory() && !f.startsWith('.');
+                    });
+                } catch (e) { sessionFolders = []; }
             }
 
             let mentionsJid = [];
             let listaFinal = "";
-            let botsEncontrados = 0;
+            let totalEnGrupo = 0;
 
-            // 3. LÓGICA DE PRIORIDAD: EL PRINCIPAL PRIMERO
-            if (participants.includes(mainBotJid)) {
+            // 3. AGREGAR AL PRINCIPAL (Siempre primero si está en el grupo)
+            // Si por alguna razón no detecta participantes, igual lo ponemos para que el comando no salga vacío
+            if (participants.length === 0 || participants.includes(mainBotJid)) {
                 mentionsJid.push(mainBotJid);
                 listaFinal += `   *➪ @${mainBotJid.split('@')[0]}* » (Principal)\n`;
-                botsEncontrados++;
+                totalEnGrupo++;
             }
 
-            // 4. LÓGICA DE SUBS: Escaneo por archivos
-            sessionFolders.forEach(folder => {
-                // Limpiamos el nombre de la carpeta para obtener solo el número
+            // 4. AGREGAR SUBS (Solo si existen carpetas)
+            for (const folder of sessionFolders) {
                 const rawNumber = folder.replace(/\D/g, '');
+                if (!rawNumber) continue;
+                
                 const subJid = `${rawNumber}@s.whatsapp.net`;
-
-                // Si el sub-bot está en el grupo y no es el principal (para no repetir)
+                
+                // Si el sub está en el grupo y no es el principal
                 if (participants.includes(subJid) && subJid !== mainBotJid) {
                     mentionsJid.push(subJid);
                     listaFinal += `   *➪ @${rawNumber}* » (Sub-Bot)\n`;
-                    botsEncontrados++;
+                    totalEnGrupo++;
                 }
-            });
+            }
 
-            // 5. Construcción del mensaje
+            // 5. MENSAJE FINAL
             const texto = `
 ✿︎ \`LISTA DE SOCKETS ACTIVOS\` ✿︎
 
 *❁ Principal » 1*
 *❀ Sub-Bots Totales » ${sessionFolders.length}*
 
-*⌨︎ Nodos en este grupo » ${botsEncontrados}*
+*⌨︎ Nodos en este grupo » ${totalEnGrupo}*
 
-${listaFinal || "_No se detectaron nodos de la red en este chat._"}
+${listaFinal}
 `.trim();
 
             await conn.sendMessage(from, { 
@@ -86,7 +89,9 @@ ${listaFinal || "_No se detectaron nodos de la red en este chat._"}
             }, { quoted: m });
 
         } catch (err) {
-            console.error('Error en socket monitor (Filesystem Mode):', err);
+            // Si llega aquí, es que algo muy raro pasó, pero lo imprimimos para saber qué es
+            console.log("ERROR EN SOCKETS:", err);
+            m.reply("⚠️ El motor de sockets encontró un problema técnico.");
         }
     }
 };
