@@ -1,5 +1,5 @@
-/* KURAYAMI TEAM - PIXEL HANDLER ENGINE 
-   Lógica: Identidad Dual (JID/LID) + Triple Prefix + No-Prefix
+/* KURAYAMI TEAM - PIXEL HANDLER (SECURITY V2) 
+   Lógica: Identidad Dual + Muro de Privado Anti-Spam
 */
 
 import chalk from 'chalk';
@@ -11,11 +11,7 @@ export const pixelHandler = async (conn, m, config) => {
         const chat = m.key.remoteJid;
         if (chat === 'status@broadcast') return;
 
-        // 1. --- IDENTIDAD EN CONTEXTO (JID O LID) ---
-        // Capturamos el remitente tal cual lo entrega Baileys en este evento
         const sender = m.sender || m.key.participant || m.key.remoteJid;
-
-        // 2. --- EXTRACCIÓN DE BODY (TODOS LOS TIPOS) ---
         const type = Object.keys(m.message)[0];
         const body = (type === 'conversation') ? m.message.conversation : 
                      (type === 'extendedTextMessage') ? m.message.extendedTextMessage.text : 
@@ -25,53 +21,48 @@ export const pixelHandler = async (conn, m, config) => {
 
         if (!body) return;
 
-        // 3. --- LÓGICA DE PREFIJOS (ALL-PREFIX + NO-PREFIX) ---
+        // 1. --- VALIDACIÓN DE DUEÑO E IDENTIDAD ---
+        const owners = Array.isArray(config.owner) ? config.owner : [config.owner];
+        const isOwner = owners.includes(sender);
+        const isGroup = chat.endsWith('@g.us');
+
+        // 2. --- MURO ANTI-SPAM (SOLO OWNER EN PRIVADO) ---
+        // Si no es grupo y no eres owner, el bot se desconecta de la lógica aquí mismo.
+        if (!isGroup && !isOwner) {
+            // Solo permitimos el comando 'code' o vinculación si es necesario
+            const firstWord = body.trim().split(/ +/)[0].toLowerCase();
+            if (firstWord !== 'code' && firstWord !== 'vinculación') return; 
+        }
+
+        // 3. --- LÓGICA DE PREFIJOS ---
         const allPrefixes = config.allPrefixes || ['#', '!', '.'];
         const usedPrefix = allPrefixes.find(p => body.startsWith(p));
-        const visualPrefix = config.prefix || '#';
-
-        let commandName = '';
-        let isCmd = false;
-
-        if (usedPrefix) {
-            isCmd = true;
-            commandName = body.slice(usedPrefix.length).trim().split(/ +/).shift().toLowerCase();
-        } else {
-            isCmd = false;
-            commandName = body.trim().split(/ +/).shift().toLowerCase();
-        }
+        
+        let commandName = usedPrefix 
+            ? body.slice(usedPrefix.length).trim().split(/ +/).shift().toLowerCase()
+            : body.trim().split(/ +/).shift().toLowerCase();
 
         const args = body.trim().split(/ +/).slice(1);
         const text = args.join(' ');
 
-        // 4. --- VALIDACIÓN DE DUEÑO (SÍ O SÍ) ---
-        const owners = Array.isArray(config.owner) ? config.owner : [config.owner];
-        // Comparamos el sender directo con la lista de identidades del config
-        const isOwner = owners.includes(sender);
-        const isGroup = chat ? chat.endsWith('@g.us') : false;
-
-        // 5. --- LOGGER ---
-        logger(m, conn);
-
-        // 6. --- EJECUCIÓN ---
+        // 4. --- EJECUCIÓN ---
         const cmd = global.commands.get(commandName) || 
                     Array.from(global.commands.values()).find(c => c.alias && c.alias.includes(commandName));
 
         if (cmd) {
-            // Regla No-Prefix: Si no hay prefijo, solo pasa si el comando lo permite
-            if (!isCmd && !cmd.noPrefix) return; 
+            // Protección adicional: Si el comando no es noPrefix y no se usó prefijo, ignorar.
+            if (!usedPrefix && !cmd.noPrefix) return;
 
-            // Validación de Poder
-            if (cmd.isOwner && !isOwner) {
-                console.log(chalk.red(`[🚫] Acceso Owner Denegado para: ${sender}`));
-                return m.reply('❌ Comando exclusivo del Desarrollador.');
-            }
+            // Validación de rango
+            if (cmd.isOwner && !isOwner) return; // Ni siquiera responde para no dar pistas
 
-            if (cmd.isGroup && !isGroup) return m.reply('❌ Este comando solo funciona en grupos.');
+            if (cmd.isGroup && !isGroup) return m.reply('❌ Este comando es solo para grupos.');
 
+            // Si todo está bien, registramos y ejecutamos
+            logger(m, conn);
             await cmd.run(conn, m, { 
                 body, 
-                prefix: visualPrefix, // El prefijo que saldrá en los textos (${prefix})
+                prefix: config.prefix, 
                 command: commandName, 
                 args, 
                 text, 
@@ -82,6 +73,6 @@ export const pixelHandler = async (conn, m, config) => {
         }
 
     } catch (err) {
-        console.error(chalk.red.bold('[ERROR EN HANDLER]'), err);
+        console.error(chalk.red('[ERROR HANDLER]'), err);
     }
 };
