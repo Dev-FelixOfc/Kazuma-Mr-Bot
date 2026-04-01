@@ -1,24 +1,51 @@
-/* KURAYAMI TEAM - UNIVERSAL OWNER COMMAND
-   Sistema: Identidad Dual (LID/JID) desde Config
+/* KURAYAMI TEAM - PRUEBA DE PODER ABSOLUTO 
+   Lógica: Identidad Inyectada (JID + LID)
 */
 
 export default {
-    name: 'setprefix',
-    alias: ['prefix'],
+    name: 'prueba',
+    alias: ['test', 'verificar'],
     category: 'owner',
-    isOwner: true, // 🚩 EL HANDLER YA SABE QUIÉN ERES (LID O JID)
+    // Mantenemos esto por si el handler ayuda, pero la magia está abajo
+    isOwner: true, 
 
-    run: async (conn, m, { args, config, isOwner }) => {
-        // Validación de Seguridad Definitiva
-        if (!isOwner) return; // Si el handler falló (improbable), esto es el doble candado
+    run: async (conn, m) => {
+        // 🛡️ CANDEADO MAESTRO DE IDENTIDAD (TUS DOS LLAVES)
+        const misIdentidades = [
+            '573508941325@s.whatsapp.net', // Tu JID (Número real)
+            '125860308893859@lid'          // Tu LID (Identidad de grupo)
+        ];
 
-        const newPrefix = args[0];
-        if (!newPrefix) return m.reply('❌ Indica el nuevo prefijo.');
+        const soyYo = misIdentidades.includes(m.sender);
 
-        // Lógica de ejecución...
-        // Aquí el bot ya sabe que eres Félix (5735... o 1258...)
-        // porque el 'isOwner' viene de comparar m.sender con config.owner
-        
-        await m.reply(`✅ Prefijo cambiado a: ${newPrefix}`);
+        // Si el que escribe NO es ninguna de tus dos identidades, el bot se calla
+        if (!soyYo) return; 
+
+        // Si pasó el filtro, significa que eres tú (en privado o en grupo LID)
+        const texto = `
+🔱 *CONEXIÓN ESTABLECIDA - KURAYAMI HOST* 🔱
+
+¡Confirmado, Félix! El código te reconoce por inyección directa.
+
+🌱 *ID Actual:* \`${m.sender}\`
+🌱 *Estado:* **ADMINISTRADOR SUPREMO** ✅
+
+> El bot ahora ignora cualquier configuración externa y te obedece a ti directamente. 😈
+`.trim();
+
+        await conn.sendMessage(m.chat, { 
+            text: texto,
+            contextInfo: {
+                externalAdReply: {
+                    title: 'SISTEMA DE SEGURIDAD KURAYAMI',
+                    body: 'Detección de Identidad Dual Directa',
+                    thumbnailUrl: 'https://files.catbox.moe/9ssbf9.jpg',
+                    mediaType: 1,
+                    showAdAttribution: true
+                }
+            }
+        }, { quoted: m });
+
+        console.log(`[🚀] ¡ACCESO CONCEDIDO A FÉLIX! ID: ${m.sender}`);
     }
 };
