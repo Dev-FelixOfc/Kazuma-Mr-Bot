@@ -16,6 +16,21 @@ export const config = {
     // Ajustes visuales para el sistema
     visuals: {
         line: '━',
-        color: 'magenta'
-    }
+        color: 'magenta',
+        // NUEVAS ADICIONES VISUALES
+        emoji: '📥',
+        emoji2: '🔍',
+        img1: 'https://link-de-tu-imagen-1.jpg', // Miniatura avisos
+        img2: 'https://link-de-tu-imagen-2.jpg', // Búsqueda grande
+        img3: 'https://link-de-tu-imagen-3.jpg'
+    },
+
+    // NUEVOS MENSAJES PARA EL MENÚ
+    bienvenidas: {
+        bienvenida1: '¡Hola! Soy Kazuma Bot, un placer atenderte.',
+        bienvenida2: 'Aquí tienes la lista de comandos:'
+    },
+
+    // NUEVAS CREDENCIALES
+    apiYT: 'NEX-0868C926ADF94B19A51E18C4'
 };
