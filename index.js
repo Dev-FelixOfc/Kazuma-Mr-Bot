@@ -1,6 +1,5 @@
 /* KURAYAMI TEAM - INDEX ENGINE 
    Desarrollado por Félix OFC para Kazuma Mister Bot
-   FIX: Vinculación dinámica sincronizada para Termux
 */
 
 import { 
@@ -9,7 +8,8 @@ import {
     fetchLatestBaileysVersion, 
     makeCacheableSignalKeyStore, 
     DisconnectReason,
-    Browsers
+    Browsers,
+    jidDecode
 } from '@whiskeysockets/baileys';
 import P from 'pino';
 import fs from 'fs';
@@ -22,7 +22,6 @@ import CFonts from 'cfonts';
 import { config } from './config.js';
 import { logger } from './config/print.js';
 import { pixelHandler } from './pixel.js';
-import { loadAllSubBots } from './sockets/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,7 +30,6 @@ const rl = createInterface({ input: process.stdin, output: process.stdout });
 const question = (text) => new Promise((resolve) => rl.question(text, resolve));
 
 global.commands = new Map();
-global.totalCommandsUsed = 0; 
 
 global.loadCommands = async () => {
     process.stdout.write(chalk.cyan('  [⚙️] Cargando módulos de comandos... '));
@@ -64,11 +62,6 @@ async function startBot() {
     CFonts.say('KAZUMA', { 
         font: 'block', align: 'center', colors: ['cyan', 'magenta'], background: 'transparent', letterSpacing: 1 
     });
-    console.log(chalk.gray('  ' + '─'.repeat(50)));
-    console.log(chalk.cyan('  [📱] SISTEMA:') + chalk.white(` Kazuma Bot Multi-Device`));
-    console.log(chalk.cyan('  [👤] DEVELOPER:') + chalk.white(` Félix OFC`));
-    console.log(chalk.cyan('  [🛠️] BAILEYS:') + chalk.white(` v${version.join('.')}`));
-    console.log(chalk.gray('  ' + '─'.repeat(50)) + '\n');
 
     const conn = makeWASocket({
         version,
@@ -84,75 +77,40 @@ async function startBot() {
 
     await global.loadCommands();
 
-    // --- NUEVA LÓGICA DE VINCULACIÓN (SIN SETTIMEOUT) ---
     if (!conn.authState.creds.registered) {
-        // Esperamos un momento a que el socket se estabilice internamente
-        // pero lo manejamos de forma que no bloquee el flujo
-        console.log(chalk.yellow('  [!] Esperando inicialización del socket...'));
-        
         setTimeout(async () => {
-            console.log(chalk.yellow('\n  ╔══════════════════════════════════════╗'));
-            console.log(chalk.yellow('  ║    VINCULACIÓN DEL BOT PRINCIPAL         ║'));
-            console.log(chalk.yellow('  ╚══════════════════════════════════════╝'));
-
             let phoneNumber = "";
-            let isValid = false;
-
-            while (!isValid) {
-                let input = await question(chalk.cyan('\n  [?] Introduce tu número (ej: 57350XXXXXXX):\n  > '));
-                phoneNumber = input.replace(/[^0-9]/g, '');
-
-                if (!phoneNumber || phoneNumber.length < 10) {
-                    console.log(chalk.red('  [!] ERROR: Número inválido.'));
-                } else {
-                    isValid = true; 
-                }
-            }
-
-            console.log(chalk.blue('\n  [⏳] Generando código para: ') + chalk.white(phoneNumber));
-
+            let input = await question(chalk.cyan('\n  [?] Introduce tu número (ej: 57350XXXXXXX):\n  > '));
+            phoneNumber = input.replace(/[^0-9]/g, '');
             try {
-                // Pedimos el código directamente ahora que el socket está listo
                 let code = await conn.requestPairingCode(phoneNumber);
                 code = code?.match(/.{1,4}/g)?.join('-') || code;
-
-                console.log('\n' + chalk.black.bgCyan('  ╔════════════════════════════════════╗  '));
-                console.log(chalk.black.bgCyan(`  ║          CODIGO: ${code}          ║  `));
-                console.log(chalk.black.bgCyan('  ╚════════════════════════════════════╝  ') + '\n');
+                console.log(chalk.black.bgCyan(`\n  CODIGO: ${code}  \n`));
             } catch (error) {
-                console.error(chalk.red('  [!] Error al generar código:'), error.message);
-                process.exit(1);
+                console.error(chalk.red('  [!] Error:'), error.message);
             }
-        }, 3000); // 3 segundos es el tiempo estándar de seguridad para Baileys
+        }, 3000);
     }
 
     conn.ev.on('creds.update', saveCreds);
 
-    conn.ev.on('connection.update', async (update) => {
+    conn.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update;
-
         if (connection === 'close') {
-            const isLoggedOut = lastDisconnect.error?.output?.statusCode === DisconnectReason.loggedOut;
-            if (isLoggedOut) {
-                console.log(chalk.red.bold('\n  [!] SESIÓN CERRADA. Borrando datos...'));
-                if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
-                process.exit(0);
-            } else {
-                console.log(chalk.yellow('  [!] Reconectando...'));
-                startBot();
-            }
+            const shouldRestart = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            if (shouldRestart) startBot();
         } else if (connection === 'open') {
-            console.log(chalk.greenBright.bold('\n  [✨] ¡KAZUMA CONECTADO CON ÉXITO!'));
-            console.log(chalk.gray('  ' + '─'.repeat(50)));
-            await loadAllSubBots(conn);
+            console.log(chalk.greenBright.bold('\n  [✨] ¡KAZUMA CONECTADO!'));
         }
     });
 
     conn.ev.on('messages.upsert', async (chatUpdate) => {
-        const m = chatUpdate.messages[0];
+        let m = chatUpdate.messages[0];
         if (!m.message || m.key.fromMe) return;
 
-        logger(m, conn);
+        // --- SERIALIZACIÓN MANUAL PARA EVITAR ERRORES ---
+        m.reply = (text) => conn.sendMessage(m.key.remoteJid, { text }, { quoted: m });
+        
         await pixelHandler(conn, m, config);
     });
 }
