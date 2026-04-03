@@ -9,28 +9,28 @@ const profileCommand = {
     name: 'profile',
     alias: ['perfil'],
     category: 'rpg',
-    run: async (conn, m, { text }) => {
+    noPrefix: true,
+    run: async (conn, m) => {
+        const from = m.chat;
         const e1 = config.visuals.emoji;
         const e2 = config.visuals.emoji2;
+        const eCoins = config.visuals.emoji5;
+        const eCmds = config.visuals.emoji6;
         
-        // Lógica de mención o respuesta
         let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : m.sender;
         const userNumber = who.split('@')[0];
         const dailyFile = path.join(dbPath, userNumber, 'daily.json');
 
-        // Obtener foto de perfil grande
         let pp;
         try {
             pp = await conn.profilePictureUrl(who, 'image');
         } catch {
-            pp = 'https://cdn.yuki-wabot.my.id/files/2PVh.jpeg'; // Default si no tiene
+            pp = 'https://cdn.yuki-wabot.my.id/files/2PVh.jpeg';
         }
 
-        // Cargar datos de la DB
         let data = { lastDaily: 0, totalCoins: 0, usedCommands: 0 };
         if (fs.existsSync(dailyFile)) data = JSON.parse(fs.readFileSync(dailyFile));
 
-        // Calcular tiempo relativo del último daily
         let lastDailyTxt = "Nunca";
         if (data.lastDaily > 0) {
             const diff = Date.now() - data.lastDaily;
@@ -40,8 +40,7 @@ const profileCommand = {
             else lastDailyTxt = `Hace ${Math.floor(dur.asSeconds())} segundo(s)`;
         }
 
-        // Obtener rol (Admin/User)
-        const groupMetadata = m.isGroup ? await conn.groupMetadata(m.chat) : {};
+        const groupMetadata = m.isGroup ? await conn.groupMetadata(from) : {};
         const participants = m.isGroup ? groupMetadata.participants : [];
         const userPart = participants.find(p => p.id === who);
         const isAdmin = userPart?.admin || userPart?.isSuperAdmin ? 'Admin' : 'User';
@@ -50,13 +49,13 @@ const profileCommand = {
         const profileText = `*${e2} \`PERFIL DE USUARIO\` ${e2}*\n\n` +
             `Nombre » *${name}*\n` +
             `Rol » *${isAdmin}*\n` +
-            `Comandos usados » *${data.usedCommands}*\n\n` +
+            `${eCmds} Comandos usados » *${data.usedCommands}*\n\n` +
             `*${e1} \`ECONOMIA\` ${e1}*\n\n` +
             `Último daily » *${lastDailyTxt}*\n` +
-            `Coins totales » *${data.totalCoins.toLocaleString()}*\n\n` +
+            `${eCoins} Coins totales » *${data.totalCoins.toLocaleString()}*\n\n` +
             `> ¡Sigue usando el bot y gana mas coins!`;
 
-        await conn.sendMessage(m.chat, { image: { url: pp }, caption: profileText }, { quoted: m });
+        await conn.sendMessage(from, { image: { url: pp }, caption: profileText }, { quoted: m });
     }
 };
 
