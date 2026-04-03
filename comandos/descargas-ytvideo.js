@@ -20,7 +20,6 @@ const ytVideoCommand = {
         const e1 = config.visuals.emoji;
         const apiKey = "api-Bb1JX"; 
 
-        // 1. AVISO: FALTA ENLACE (Con miniatura pequeña)
         if (!text) {
             return await conn.sendMessage(from, { 
                 text: `*${e1} Ingresa un enlace de Youtube.*`,
@@ -39,7 +38,7 @@ const ytVideoCommand = {
         }
 
         try {
-            // 2. AVISO: BUSCANDO (Con miniatura pequeña)
+            // 1. AVISO: BUSCANDO
             await conn.sendMessage(from, { 
                 text: `*${config.visuals.emoji2} Buscando resultados...*`,
                 contextInfo: {
@@ -54,32 +53,23 @@ const ytVideoCommand = {
                 }
             }, { quoted: m });
 
-            // Solicitud a la API Stellarwa
             const apiUrl = `https://api.stellarwa.xyz/dl/ytmp4v2?url=${encodeURIComponent(text)}&key=${apiKey}`;
             const res = await fetch(apiUrl);
             const json = await res.json();
 
             if (!json.status || !json.data || !json.data.dl) {
-                // AVISO: ERROR API (Con miniatura pequeña)
-                return await conn.sendMessage(from, { 
-                    text: `*${e1} Error:* No se pudo obtener el enlace de descarga.`,
-                    contextInfo: {
-                        externalAdReply: {
-                            title: 'KAZUMA - ERROR',
-                            body: 'API Error / Link inválido',
-                            thumbnailUrl: config.visuals.img1,
-                            mediaType: 1,
-                            renderLargerThumbnail: false
-                        }
-                    }
-                }, { quoted: m });
+                return m.reply(`*${e1} Error:* No se pudo obtener el enlace de descarga.`);
             }
 
             const { title, uploader, views, size, duration, dl } = json.data;
 
-            // 3. ENVÍO DEL VIDEO (Directo, SIN miniatura de contexto)
+            // --- SOLUCIÓN AL ERROR DE REPRODUCCIÓN ---
+            // Descargamos el video como Buffer para que WhatsApp lo reciba completo
+            const videoBuffer = await fetch(dl).then(res => res.buffer());
+
+            // 2. ENVÍO DEL VIDEO REAL
             await conn.sendMessage(from, { 
-                video: { url: dl }, 
+                video: videoBuffer, // Enviamos el buffer, no la URL
                 caption: `*${e1} TÍTULO:* ${title}\n*👤 CANAL:* ${uploader}\n*👁️ VISTAS:* ${views}\n*⌛ DURACIÓN:* ${duration}\n*📦 PESO:* ${size}\n\n> Kazuma-Bot | Félix Ofc`,
                 fileName: `${title}.mp4`,
                 mimetype: 'video/mp4'
@@ -87,7 +77,7 @@ const ytVideoCommand = {
 
         } catch (error) {
             console.error('Error en descargas-ytvideo:', error);
-            m.reply(`*${e1} Error:* Hubo un fallo crítico en el sistema de descargas.`);
+            m.reply(`*${e1} Error:* Hubo un fallo al procesar el archivo de video.`);
         }
     }
 };
