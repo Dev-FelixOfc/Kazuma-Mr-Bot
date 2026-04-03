@@ -3,93 +3,89 @@ por favor y no quites los créditos.
 https://github.com/Dev-FelixOfc 
 */
 
-import { config } from '../config.js';
 import fetch from 'node-fetch';
+import { config } from '../config.js';
 
-let ytSearchDB = {};
+if (!global.ytSearchDB) global.ytSearchDB = {};
 
 const ytSearchCommand = {
     name: 'ytsearch',
     alias: ['yt', 'yts', 'buscar'],
-    category: 'downloads',
+    category: 'downloader',
     run: async (conn, m, { text }) => {
-        const from = m.key.remoteJid;
+        const from = m.chat;
         const e1 = config.visuals.emoji;
-        const e2 = config.visuals.emoji2;
-        const apiKey = "api-Bb1JX"; 
 
-        if (!text) return m.reply(`*${e1} Ingresa el nombre del video a buscar.*`);
+        if (!text) return m.reply('《✧》Ingresa el nombre del video a buscar.');
 
         try {
-            // Mensaje de estado rápido
-            await m.reply(`*${e2} Buscando resultados para:* ${text}...`);
-
-            // Intentamos obtener resultados de la API Stellar
-            const res = await fetch(`https://api.stellarwa.xyz/search/yt?query=${encodeURIComponent(text)}&key=${apiKey}`);
+            // 1. Solicitud a la API Stellar
+            const res = await fetch(`https://api.stellarwa.xyz/search/yt?query=${encodeURIComponent(text)}&key=api-Bb1JX`);
             const json = await res.json();
 
-            // Si Stellar falla o no tiene resultados, intentamos con Nex-Magical (Fallback)
-            let results = json.status && json.result ? json.result : null;
-            
-            if (!results || results.length === 0) {
-                const resFallback = await fetch(`https://nex-magical.vercel.app/search/youtube?q=${encodeURIComponent(text)}&apikey=${config.apiYT}`);
-                const jsonFallback = await resFallback.json();
-                results = jsonFallback.status ? jsonFallback.result.map(v => ({
-                    title: v.title,
-                    autor: 'YouTube',
-                    duration: v.duration,
-                    banner: v.thumbnail || config.visuals.img1,
-                    url: v.link
-                })) : null;
+            if (!json.status || !json.result || json.result.length === 0) {
+                return m.reply('《✧》 Sin resultados.');
             }
 
-            if (!results || results.length === 0) {
-                return m.reply(`*${e1} Error:* No se encontraron videos.`);
-            }
+            const results = json.result.slice(0, 10);
+            global.ytSearchDB[from] = results.map(v => v.url);
 
-            // Guardamos los links para el "before"
-            const limitedResults = results.slice(0, 10);
-            ytSearchDB[from] = limitedResults.map(v => v.url);
-
-            // Construcción del texto
-            let txt = `*✅ Se encontraron ${limitedResults.length} resultados para:* ${text.toUpperCase()}\n\n`;
-            limitedResults.forEach((v, i) => {
-                txt += `*${i + 1}.* ${v.title}\n*⌛:* ${v.duration} | *👤:* ${v.autor || v.uploader}\n\n`;
+            // 2. Texto de la lista
+            let txt = `➩ *RESULTADOS DE:* ${text.toUpperCase()}\n\n`;
+            results.forEach((v, i) => {
+                txt += `*${i + 1}.* ${v.title}\n> ⴵ Duración › ${v.duration}\n> ❖ Canal › ${v.autor}\n\n`;
             });
-            txt += `*${e1} Responde a este mensaje con un número (1-${limitedResults.length}) para descargar el video.*`;
+            txt += `《✧》 *Responde con un número para descargar en MP3.*`;
 
-            // Enviamos la miniatura del primer resultado como FOTO REAL
-            const firstThumb = limitedResults[0].banner || limitedResults[0].thumb;
-
+            // 3. Miniatura del primer resultado como FOTO REAL
             await conn.sendMessage(from, { 
-                image: { url: firstThumb }, 
+                image: { url: results[0].banner }, 
                 caption: txt 
             }, { quoted: m });
 
-        } catch (error) {
-            console.error('Error en buscador:', error);
-            m.reply(`*${e1} Error:* El servidor de búsqueda no responde.`);
+        } catch (e) {
+            console.error(e);
+            m.reply('《✧》 Error al conectar con el buscador.');
         }
     }
 };
 
 export const before = async (conn, m) => {
-    // Validamos que sea una respuesta numérica al mensaje de resultados
     if (!m.quoted || !m.quoted.fromMe || !m.text || isNaN(m.text)) return;
-    if (!m.quoted.text || !m.quoted.text.includes('Se encontraron')) return;
+    if (!m.quoted.text || !m.quoted.text.includes('RESULTADOS DE:')) return;
 
-    const from = m.key.remoteJid;
-    const chatData = ytSearchDB[from];
-    if (!chatData) return;
+    const from = m.chat;
+    const links = global.ytSearchDB[from];
+    if (!links) return;
 
     const index = parseInt(m.text.trim()) - 1;
-    if (index < 0 || index >= chatData.length) return;
+    if (index < 0 || index >= links.length) return;
 
-    const link = chatData[index];
-    
-    // Llamamos al descargador de video (asegúrate de que el nombre del archivo sea correcto)
-    const { default: videoCmd } = await import('./descargas-ytvideo.js');
-    await videoCmd.run(conn, m, { text: link, command: 'ytmp4' });
+    const selectedLink = links[index];
+
+    try {
+        await m.reply('*《✧》 Descargando audio (MP3)...*');
+        
+        // Descarga usando Stellar en formato MP3
+        const res = await fetch(`https://api.stellarwa.xyz/dl/ytdl?url=${encodeURIComponent(selectedLink)}&format=mp3&key=api-Bb1JX`);
+        const data = await res.json();
+
+        // Extractor basado en la respuesta de Stellar
+        const dlLink = data.result?.download || data.data?.dl;
+        
+        if (!dlLink) return m.reply('《✧》 Error: No se pudo generar el link de descarga.');
+
+        const audioBuffer = await fetch(dlLink).then(r => r.buffer());
+
+        await conn.sendMessage(from, { 
+            audio: audioBuffer, 
+            mimetype: 'audio/mpeg', 
+            fileName: `audio.mp3` 
+        }, { quoted: m });
+
+    } catch (e) {
+        m.reply('《✧》 Error al procesar el audio.');
+    }
 };
 
 export default ytSearchCommand;
