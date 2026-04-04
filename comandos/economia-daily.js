@@ -1,8 +1,29 @@
+/* KURAYAMI TEAM - ECONOMY SYSTEM (DAILY)
+   Lógica: Cooldown 24h de Base CommonJS
+   Estructura: ESM compatible con Pixel Handler
+*/
+
 import fs from 'fs';
 import path from 'path';
 import { config } from '../config.js';
 
 const dbPath = './comandos/database/economy/';
+
+// --- HELPERS LÓGICOS ---
+const toMs = (h = 0, m = 0, s = 0) => ((h * 3600) + (m * 60) + s) * 1000;
+const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const formatDelta = (ms) => {
+    if (!ms || ms <= 0) return '00:00:00';
+    const total = Math.floor(ms / 1000);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    const parts = [];
+    if (h) parts.push(`${h}h`);
+    if (m) parts.push(`${m}m`);
+    parts.push(`${s}s`);
+    return parts.join(' : ');
+};
 
 const dailyCommand = {
     name: 'daily',
@@ -12,9 +33,12 @@ const dailyCommand = {
 
     run: async (conn, m, args, usedPrefix, command, text) => {
         const from = m.key.remoteJid;
-        // Ajuste de emojis según tu config
-        const e1 = config.visuals?.emoji || '✨';
-        const eCoins = config.visuals?.emoji5 || '🪙';
+        
+        // --- LECTURA DINÁMICA DE CONFIG ---
+        const e1 = config.visuals.emoji;
+        const e2 = config.visuals.emoji2;
+        const eCoins = config.visuals.emoji5;
+        const img = config.visuals.img1;
 
         const userNumber = m.sender.split('@')[0];
         const userDir = path.join(dbPath, userNumber);
@@ -26,34 +50,42 @@ const dailyCommand = {
         if (fs.existsSync(dailyFile)) {
             try {
                 data = JSON.parse(fs.readFileSync(dailyFile));
-            } catch (e) { console.error("Error leyendo DB:", e); }
+            } catch (e) {
+                console.error("Error en DB:", e);
+            }
         }
 
         const now = Date.now();
-        const cooldown = 24 * 60 * 60 * 1000;
+        const cd = toMs(24, 0, 0); // 24 horas
 
-        if (now - data.lastDaily < cooldown) {
-            const remaining = cooldown - (now - data.lastDaily);
-            const h = Math.floor(remaining / 3600000);
-            const m_time = Math.floor((remaining % 3600000) / 60000);
+        // --- VALIDACIÓN DE TIEMPO (Lógica Base) ---
+        if (now - (data.lastDaily || 0) < cd) {
+            const remaining = (data.lastDaily || 0) + cd - now;
             
-            return m.reply(`*${e1}* Espera *${h}h ${m_time}m* para volver a reclamar.`);
+            return conn.sendMessage(from, { 
+                image: { url: img },
+                caption: `*${e1}* Espera *${formatDelta(remaining)}* para volver a reclamar una recompensa diaria.\n\n> ¡No creas que me dejaré engañar!` 
+            }, { quoted: m });
         }
 
-        data.totalCoins += data.nextReward;
+        // --- RECOMPENSA Y TEXTOS ORIGINALES ---
+        const coinsGained = data.nextReward || 1000;
+        data.totalCoins = (data.totalCoins || 0) + coinsGained;
         data.lastDaily = now;
-        data.usedCommands += 1;
-        // Incremento de recompensa para motivar al usuario
-        data.nextReward = Math.floor(data.nextReward * 1.5);
+        data.nextReward = coinsGained * 2;
+        data.usedCommands = (data.usedCommands || 0) + 1;
 
         fs.writeFileSync(dailyFile, JSON.stringify(data, null, 2));
 
-        const txt = `*${e1} RECOMPENSA DIARIA ${e1}*\n\n` +
-                    `${eCoins} Coins ganados: *${(data.nextReward / 1.5).toLocaleString()}*\n` +
-                    `💰 Total en cuenta: *${data.totalCoins.toLocaleString()}*\n\n` +
-                    `> Vuelve mañana por más.`;
+        const txt = `*${e1} \`RECOMPENSA DIARIA\` ${e1}*\n\n` +
+                    `${eCoins} Coins añadidos: *${coinsGained.toLocaleString()}*\n` +
+                    `${e2} Próxima recompensa: *${data.nextReward.toLocaleString()}*\n\n` +
+                    `> ¡Vuelve mañana y gana coins como un genio!`;
 
-        await conn.sendMessage(from, { text: txt }, { quoted: m });
+        await conn.sendMessage(from, { 
+            image: { url: img }, 
+            caption: txt 
+        }, { quoted: m });
     }
 };
 
