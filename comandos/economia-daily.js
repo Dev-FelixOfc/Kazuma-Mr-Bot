@@ -10,20 +10,24 @@ const dailyCommand = {
     category: 'economy',
     noPrefix: true,
 
-    run: async (conn, m) => {
-        const from = m.chat;
-        const e1 = config.visuals.emoji;
-        const e2 = config.visuals.emoji2;
-        const eCoins = config.visuals.emoji5;
-        
-        const user = m.sender.split('@')[0];
-        const userDir = path.join(dbPath, user);
+    run: async (conn, m, args, usedPrefix, command, text) => {
+        const from = m.key.remoteJid;
+        // Ajuste de emojis según tu config
+        const e1 = config.visuals?.emoji || '✨';
+        const eCoins = config.visuals?.emoji5 || '🪙';
+
+        const userNumber = m.sender.split('@')[0];
+        const userDir = path.join(dbPath, userNumber);
         const dailyFile = path.join(userDir, 'daily.json');
 
         if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
 
         let data = { lastDaily: 0, nextReward: 1000, totalCoins: 0, usedCommands: 0 };
-        if (fs.existsSync(dailyFile)) data = JSON.parse(fs.readFileSync(dailyFile));
+        if (fs.existsSync(dailyFile)) {
+            try {
+                data = JSON.parse(fs.readFileSync(dailyFile));
+            } catch (e) { console.error("Error leyendo DB:", e); }
+        }
 
         const now = Date.now();
         const cooldown = 24 * 60 * 60 * 1000;
@@ -32,28 +36,24 @@ const dailyCommand = {
             const remaining = cooldown - (now - data.lastDaily);
             const h = Math.floor(remaining / 3600000);
             const m_time = Math.floor((remaining % 3600000) / 60000);
-            const s = Math.floor((remaining % 60000) / 1000);
             
-            return conn.sendMessage(from, { 
-                image: { url: config.visuals.img1 },
-                caption: `*${e1}* Espera *${h}h ${m_time}m ${s}s* para volver a reclamar una recompensa diaria.\n\n> ¡No creas que me dejaré engañar!` 
-            }, { quoted: m });
+            return m.reply(`*${e1}* Espera *${h}h ${m_time}m* para volver a reclamar.`);
         }
 
-        const coinsGained = data.nextReward;
-        data.totalCoins += coinsGained;
+        data.totalCoins += data.nextReward;
         data.lastDaily = now;
-        data.nextReward = coinsGained * 2;
         data.usedCommands += 1;
+        // Incremento de recompensa para motivar al usuario
+        data.nextReward = Math.floor(data.nextReward * 1.5);
 
         fs.writeFileSync(dailyFile, JSON.stringify(data, null, 2));
 
-        const txt = `*${e1} \`RECOMPENSA DIARIA\` ${e1}*\n\n` +
-                    `${eCoins} Coins añadidos: *${coinsGained.toLocaleString()}*\n` +
-                    `${e2} Próxima recompensa: *${data.nextReward.toLocaleString()}*\n\n` +
-                    `> ¡Vuelve mañana y gana coins como un genio!`;
+        const txt = `*${e1} RECOMPENSA DIARIA ${e1}*\n\n` +
+                    `${eCoins} Coins ganados: *${(data.nextReward / 1.5).toLocaleString()}*\n` +
+                    `💰 Total en cuenta: *${data.totalCoins.toLocaleString()}*\n\n` +
+                    `> Vuelve mañana por más.`;
 
-        await conn.sendMessage(from, { image: { url: config.visuals.img1 }, caption: txt }, { quoted: m });
+        await conn.sendMessage(from, { text: txt }, { quoted: m });
     }
 };
 
