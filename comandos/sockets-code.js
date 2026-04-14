@@ -1,5 +1,7 @@
 import { startSubBot } from '../sockets/index.js';
 import { config } from '../config.js';
+import fs from 'fs';
+import path from 'path';
 
 const cooldowns = new Map();
 
@@ -12,45 +14,47 @@ const codeCommand = {
     isAdmin: false,
     isGroup: false,
 
-    run: async (conn, m, { prefix, args }) => {
+    run: async (conn, m, args, prefix) => {
         const from = m.key.remoteJid;
+        const sender = m.sender || m.key.participant || from;
 
-        if (!args[0]) {
+        const subbotsPath = './sesion_bot/subbots'; 
+        if (fs.existsSync(subbotsPath)) {
+            const totalSubbots = fs.readdirSync(subbotsPath).length;
+            if (totalSubbots >= 75) {
+                return await conn.sendMessage(from, { 
+                    text: `*❁* \`Límite alcanzado\` *❁*\n\nLo siento, el sistema solo permite un máximo de *75 subbots* activos.\n\n> ¡Pronto ampliaremos nuestra capacidad!` 
+                }, { quoted: m });
+            }
+        }
+
+        if (!args || !args[0]) {
             return await conn.sendMessage(from, { 
-                text: `⚠️ *Número faltante*\n\nUso: *${prefix}code 1849XXXXXXX*\n(Ingresa el número tal cual lo pondrías en la consola)` 
+                text: `*❁* \`Número faltante\` *❁*\n\nUso: *${prefix || '#'}code 1849XXXXXXX*\n\n> ¡Ingresa un número válido para comenzar!` 
             }, { quoted: m });
         }
 
-        // Limpieza total: Solo números. Baileys falla si hay espacios o símbolos.
         let targetNumber = args[0].replace(/[^0-9]/g, '');
-
         const now = Date.now();
         if (cooldowns.has(from) && (now < cooldowns.get(from) + 60000)) return;
 
         try {
-            // 1. Aviso de inicio de proceso
             const msgEspera = await conn.sendMessage(from, { 
-                text: `⏳ *Iniciando vinculación para:* \`${targetNumber}\`...\n\n> Esperando respuesta del servidor de WhatsApp...`,
+                text: `*✿︎* \`Iniciando proceso\` *✿︎*\n\nVinculando a: \`${targetNumber}\`...\n\n> ¡Espera un momento, la magia está ocurriendo!`,
             }, { quoted: m });
 
-            // 2. Levantar el socket (Esto crea la carpeta de sesión igual que el index)
             const jidReal = `${targetNumber}@s.whatsapp.net`;
             const sock = await startSubBot(jidReal, conn);
 
-            // 3. Pequeña espera de 3 segundos para que el socket "despierte" antes de pedir el code
             await new Promise(resolve => setTimeout(resolve, 3000));
 
-            // 4. Solicitar el Pairing Code (Simulando la acción de la terminal)
             let code = await sock.requestPairingCode(targetNumber);
-
-            // Si Baileys no devuelve nada, lanzamos error para el catch
             if (!code) throw new Error("No se pudo generar el código");
 
             code = code?.match(/.{1,4}/g)?.join('-') || code;
 
-            // 5. Enviar instrucciones y el código final
             const msgInstrucciones = await conn.sendMessage(from, { 
-                text: `✿︎ \`Vinculación del socket\` ✿︎\n\n*❁* \`Pasos a seguir:\` \nDispositivos vinculados > vincular nuevo dispositivo > Vincular con número de teléfono > ingresa el código.\n\n\`Nota\` » El código es válido por *60 segundos*.`,
+                text: `✿︎ \`Vinculación del socket\` ✿︎\n\n*❁* \`Pasos a seguir:\` \nDispositivos vinculados > vincular nuevo dispositivo > Vincular con número de teléfono > ingresa el código.\n\n\`Nota\` » El código es válido por *60 segundos*.\n\n> ¡Ya casi eres parte de la familia!`,
                 contextInfo: {
                     externalAdReply: {
                         title: 'KAZUMA - CÓDIGO GENERADO',
@@ -63,13 +67,20 @@ const codeCommand = {
             });
 
             const msgCodigo = await conn.sendMessage(from, { text: code }, { quoted: msgInstrucciones });
-
-            // Borrar el "Generando..." para no llenar el chat
             await conn.sendMessage(from, { delete: msgEspera.key });
+
+            sock.ev.on('connection.update', async (update) => {
+                const { connection } = update;
+                if (connection === 'open') {
+                    await conn.sendMessage(from, { 
+                        text: `*[❁]* Conexión Socket exitosa.\n@${sender.split('@')[0]}\n\n> ¡Disfruta del Bot, pronto añadiremos más cosas!`,
+                        mentions: [sender]
+                    }, { quoted: m }); 
+                }
+            });
 
             cooldowns.set(from, now);
 
-            // 6. Auto-borrado de seguridad
             setTimeout(async () => {
                 try {
                     await conn.sendMessage(from, { delete: msgInstrucciones.key });
@@ -80,7 +91,7 @@ const codeCommand = {
         } catch (err) {
             console.error('Error al generar sub-bot:', err);
             await conn.sendMessage(from, { 
-                text: `❌ *Error de Vinculación*\n\nWhatsApp rechazó la solicitud para el número *${targetNumber}*. \n\n*Posibles causas:*\n1. El número no tiene el código de país.\n2. Ya tienes una sesión abierta con ese número.\n3. Intentaste demasiadas veces (espera 24h).` 
+                text: `*❁* \`Error de Vinculación\` *❁*\n\nOcurrió un inconveniente: ${err.message}\n\n> ¡Inténtalo de nuevo, no te rindas!` 
             });
         }
     }
