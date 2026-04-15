@@ -56,9 +56,8 @@ const yotsubaUploadCommand = {
 
 *✿︎ Enlace:* \`${finalUrl}\`
 *✿︎ Tipo:* \`${mime}\`
-*✿︎ Hosting:* \`Privado (Felix Server)\`
 
-> ¡(Aviso)! Recuerda que este enlace es público, compártelo con cuidado.`;
+> ¡Recuerda que este enlace es público, compártelo con cuidado!`;
 
             await conn.sendMessage(m.key.remoteJid, { 
                 text: successText 
