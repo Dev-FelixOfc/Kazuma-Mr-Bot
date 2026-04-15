@@ -72,9 +72,10 @@ const codeCommand = {
             sock.ev.on('connection.update', async (update) => {
                 const { connection } = update;
                 if (connection === 'open') {
+                    const mentionJid = [sender];
                     await conn.sendMessage(from, { 
                         text: `*[❁]* Conexión Socket exitosa.\n@${sender.split('@')[0]}\n\n> ¡Disfruta del Bot, pronto añadiremos más cosas!`,
-                        mentions: [sender]
+                        mentions: mentionJid
                     }, { quoted: m }); 
                 }
             });
