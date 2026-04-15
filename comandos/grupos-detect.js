@@ -1,11 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import chalk from 'chalk';
 
 const databasePath = path.resolve('./jsons/grupos.json');
 
-export default async (conn) => {
-    // 1. Escuchar cambios de participantes (Promote/Demote)
+export default async function (conn) {
+    // Evento para Promote/Demote
     conn.ev.on('group-participants.update', async (anu) => {
         try {
             const { id, participants, action, author } = anu;
@@ -13,68 +12,45 @@ export default async (conn) => {
             const db = JSON.parse(fs.readFileSync(databasePath, 'utf-8'));
             if (!db[id] || !db[id].detect) return;
 
-            const metadata = await conn.groupMetadata(id).catch(() => null);
-            if (!metadata) return;
-
             for (const user of participants) {
                 const phone = user.split('@')[0];
-                const actor = author ? author.split('@')[0] : 'Sistema';
+                const actor = author ? author.split('@')[0] : 'un Administrador';
                 let text = '';
 
                 if (action === 'promote') {
-                    text = `*✿︎* \`Nuevo Administrador\` *✿︎*\n\n*@${phone}* ha sido promovido a Administrador por *@${actor}*.\n\n> ¡Felicidades por el nuevo cargo!`;
+                    text = `*✿︎* \`Nuevo Administrador\` *✿︎*\n\n*@${phone}* ha sido promovido a Administrador por *@${actor}*.\n\n> ¡Felicidades!`;
                 } else if (action === 'demote') {
-                    text = `*❁* \`Remoción de Cargo\` *❁*\n\n*@${phone}* ha sido degradado de Administrador por *@${actor}*.\n\n> ¡Esperamos que sigas aportando al grupo!`;
+                    text = `*❁* \`Remoción de Cargo\` *❁*\n\n*@${phone}* ha sido degradado de Administrador por *@${actor}*.\n\n> ¡Ánimo!`;
                 }
 
                 if (text) {
                     await conn.sendMessage(id, { text, mentions: [user, author].filter(Boolean) });
                 }
             }
-        } catch (err) {
-            console.log(chalk.gray(`[DETECT ERROR] -> ${err}`));
-        }
+        } catch (e) { console.error(e); }
     });
 
-    // 2. Escuchar cambios en ajustes del grupo (Nombre, Enlace, etc)
+    // Evento para cambios de Nombre/Ajustes
     conn.ev.on('messages.upsert', async ({ messages }) => {
-        try {
-            const m = messages[0];
-            if (!m.messageStubType) return;
-            const id = m.key.remoteJid;
-            
-            if (!fs.existsSync(databasePath)) return;
-            const db = JSON.parse(fs.readFileSync(databasePath, 'utf-8'));
-            if (!db[id] || !db[id].detect) return;
+        const m = messages[0];
+        if (!m.messageStubType) return;
+        const id = m.key.remoteJid;
 
-            const actor = m.key?.participant || m.participant || m.key?.remoteJid;
-            const phone = actor.split('@')[0];
-            let msg = '';
+        if (!fs.existsSync(databasePath)) return;
+        const db = JSON.parse(fs.readFileSync(databasePath, 'utf-8'));
+        if (!db[id] || !db[id].detect) return;
 
-            switch (m.messageStubType) {
-                case 21: msg = `cambió el nombre del grupo a: *${m.messageStubParameters[0]}*`; break;
-                case 22: msg = `cambió el icono del grupo.`; break;
-                case 23: msg = `restableció el enlace del grupo.`; break;
-                case 24: msg = `cambió la descripción del grupo.`; break;
-                case 25: msg = `cambió los ajustes: *${m.messageStubParameters[0] == 'on' ? 'Solo Admins' : 'Todos'}* pueden editar el grupo.`; break;
-                case 26: msg = `cambió los ajustes: *${m.messageStubParameters[0] == 'on' ? 'Cerrar Chat' : 'Abrir Chat'}*.`; break;
-            }
+        const actor = m.key?.participant || m.participant || m.key?.remoteJid;
+        const phone = actor ? actor.split('@')[0] : 'Alguien';
+        let msg = '';
 
-            if (msg) {
-                await conn.sendMessage(id, { 
-                    text: `*✿︎* \`Aviso de Grupo\` *✿︎*\n\n*@${phone}* ${msg}\n\n> Ajuste detectado por Kazuma.`, 
-                    mentions: [actor] 
-                });
-            }
-        } catch (err) {
-            console.log(chalk.gray(`[STUB ERROR] -> ${err}`));
+        if (m.messageStubType == 21) msg = `cambió el nombre a: *${m.messageStubParameters[0]}*`;
+        if (m.messageStubType == 22) msg = `cambió el icono del grupo.`;
+        if (m.messageStubType == 24) msg = `cambió la descripción.`;
+        if (m.messageStubType == 25) msg = `puso los ajustes en: *${m.messageStubParameters[0] == 'on' ? 'Solo Admins' : 'Todos'}*.`;
+
+        if (msg) {
+            await conn.sendMessage(id, { text: `*✿︎* \`Aviso de Grupo\` *✿︎*\n\n*@${phone}* ${msg}`, mentions: [actor].filter(Boolean) });
         }
     });
-};
-
-// Info para que tu cargador de comandos no se confunda
-export const config = {
-    name: 'grupos-detect',
-    category: 'grupo',
-    type: 'event'
-};
+}
