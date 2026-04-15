@@ -1,4 +1,4 @@
-/* KAZUMA MISTER BOT - ANTI-LINK (SOCIAL UPDATED) */
+/* KAZUMA MISTER BOT - ANTI-LINK (SOCIAL WHITELIST) */
 import fs from 'fs';
 import path from 'path';
 
@@ -19,34 +19,34 @@ const antiLinkHandler = async (conn, m) => {
                  m.message?.imageMessage?.caption || 
                  m.message?.videoMessage?.caption || "";
     
+    // Regex general de enlaces
     const linkRegex = /((https?:\/\/|www\.)?[\w-]+\.[\w-]+(?:\.[\w-]+)*(\/[\w\.\-\?\=\&\%\#]*)?)/gi;
     
     if (linkRegex.test(body)) {
-        // --- LISTA BLANCA DE REDES SOCIALES ---
-        const socialWhites = [
+        // --- FILTRO DE REDES SOCIALES (NO BANEAR) ---
+        const socialLinks = [
             'youtube.com', 'youtu.be', 'tiktok.com', 'facebook.com', 'fb.watch', 
-            'instagram.com', 'ig.me', 'twitter.com', 'x.com', 'threads.net'
+            'instagram.com', 'ig.me', 'twitter.com', 'x.com', 'threads.net', 'google.com'
         ];
         
-        // Si el link contiene alguna de estas redes, NO HACER NADA
-        const isSocialLink = socialWhites.some(site => body.toLowerCase().includes(site));
-        if (isSocialLink) return;
+        const isSocial = socialLinks.some(link => body.toLowerCase().includes(link));
+        if (isSocial) return;
 
-        // Excepciones de Kazuma
+        // Excepciones Oficiales
         if (body.includes('github.com/Dev-FelixOfc/Kazuma-Mr-Bot')) return;
         if (body.includes('whatsapp.com/channel/0029Vb6sgWdJkK73qeLU0J0N')) return;
         const code = await conn.groupInviteCode(from).catch(() => null);
         if (code && body.includes(`chat.whatsapp.com/${code}`)) return;
 
-        // Verificar Admin
+        // Validar Admin
         const groupMetadata = await conn.groupMetadata(from);
         const isAdmin = groupMetadata.participants.find(p => p.id === sender)?.admin;
         if (isAdmin) return;
 
-        // ACCIÓN: Borrar y Expulsar
+        // Ejecutar Sanción
         await conn.sendMessage(from, { delete: m.key });
         await conn.sendMessage(from, { 
-            text: `*❁* \`Anti-Link Detectado\` *❁*\n\nEl usuario *@${sender.split('@')[0]}* ha sido eliminado por enviar enlaces prohibidos.\n\n> Se permiten links de: *YT, TikTok, IG, FB.*`,
+            text: `*❁* \`Anti-Link\` *❁*\n\nEl usuario *@${sender.split('@')[0]}* ha sido eliminado. Solo permitimos enlaces de Redes Sociales oficiales.\n\n> Kazuma Mister Bot Security.`,
             mentions: [sender]
         });
         await conn.groupParticipantsUpdate(from, [sender], 'remove');
