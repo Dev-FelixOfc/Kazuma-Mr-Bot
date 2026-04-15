@@ -5,7 +5,6 @@ import fs from 'fs';
 import path from 'path';
 import { logger } from './config/print.js';
 
-// Rutas absolutas para evitar errores entre procesos de PM2
 const databasePath = path.join(process.cwd(), 'jsons', 'preferencias.json');
 const sessionsPath = path.join(process.cwd(), 'sesiones_subbots');
 
@@ -27,36 +26,31 @@ export const pixelHandler = async (conn, m, config) => {
 
         if (!body) return;
 
+        // --- LÓGICA DE PREFIJOS DINÁMICOS ---
         const allPrefixes = config.allPrefixes || ['#', '!', '.'];
-        const usedPrefix = allPrefixes.find(p => body.startsWith(p));
+        const foundPrefix = allPrefixes.find(p => body.startsWith(p));
 
-        let commandName = usedPrefix 
-            ? body.slice(usedPrefix.length).trim().split(/ +/).shift().toLowerCase()
+        // Esta es la clave: Si el usuario USÓ un prefijo, mantenemos ese.
+        // Si NO usó prefijo (noPrefix), usamos '#' para que aparezca en los mensajes.
+        let usedPrefix = foundPrefix ? foundPrefix : '#';
+
+        let commandName = foundPrefix 
+            ? body.slice(foundPrefix.length).trim().split(/ +/).shift().toLowerCase()
             : body.trim().split(/ +/).shift().toLowerCase();
 
         // --- LÓGICA DE BOT PRIMARIO ---
         if (isGroup) {
-            // EXCEPCIÓN: Todos los bots deben escuchar los comandos de gestión
             const comandosGestion = ['setprimary', 'delprimary'];
-            
             if (!comandosGestion.includes(commandName)) {
                 const myJid = conn.user.id.split(':')[0].replace(/[^0-9]/g, '');
-
                 if (fs.existsSync(databasePath)) {
                     let db = JSON.parse(fs.readFileSync(databasePath, 'utf-8'));
-                    
                     if (db[chat]) {
                         const primaryNumber = db[chat].replace(/[^0-9]/g, '');
-                        
-                        // Verificar si el primario sigue existiendo físicamente
                         const isSubActive = fs.existsSync(path.join(sessionsPath, primaryNumber));
-                        const isMainActive = true; 
-
                         if (isSubActive || primaryNumber === myJid) {
-                            // Si hay un primario activo y no soy yo, ignoro el comando
                             if (myJid !== primaryNumber) return; 
                         } else {
-                            // Limpieza automática si el bot primario desapareció
                             delete db[chat];
                             fs.writeFileSync(databasePath, JSON.stringify(db, null, 2));
                         }
@@ -72,7 +66,10 @@ export const pixelHandler = async (conn, m, config) => {
                     Array.from(global.commands.values()).find(c => c.alias && c.alias.includes(commandName));
 
         if (!cmd) return;
-        if (!usedPrefix && !cmd.noPrefix) return;
+
+        // SIGUE SIENDO LIBRE: Si no hay prefijo real, verificamos si el comando es noPrefix
+        if (!foundPrefix && !cmd.noPrefix) return;
+
         if (!isGroup && !isOwner && commandName !== 'code') return;
 
         if (cmd.isOwner && !isOwner) {
@@ -84,6 +81,8 @@ export const pixelHandler = async (conn, m, config) => {
         }
 
         logger(m, conn);
+        
+        // Ejecutamos pasando usedPrefix (que será el real o '#' si fue noPrefix)
         await cmd.run(conn, m, args, usedPrefix, commandName, text);
 
     } catch (err) {
