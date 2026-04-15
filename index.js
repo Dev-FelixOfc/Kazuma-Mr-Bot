@@ -116,6 +116,11 @@ async function startBot() {
         // --- SERIALIZACIÓN MANUAL ---
         m.reply = (text) => conn.sendMessage(m.key.remoteJid, { text }, { quoted: m });
 
+        // --- INTEGRACIÓN ANTI-LINK ---
+        import('./comandos/grupos-antilink.js').then(anti => {
+            anti.default(conn, m);
+        }).catch(e => console.error(chalk.red("  [❌] Error en Anti-Link:"), e.message));
+
         await pixelHandler(conn, m, config);
     });
 }
