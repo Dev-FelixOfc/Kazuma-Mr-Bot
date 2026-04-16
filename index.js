@@ -23,7 +23,6 @@ import { config } from './config.js';
 import { logger } from './config/print.js';
 import { pixelHandler } from './pixel.js';
 
-// --- IMPORTACIÓN DIRECTA PARA EVITAR RETRASOS ---
 import { detectHandler } from './comandos/grupos-detect.js';
 import antiLinkHandler from './comandos/grupos-antilink.js';
 
@@ -81,7 +80,6 @@ async function startBot() {
 
     await global.loadCommands();
 
-    // --- CARGA DE DETECTOR DE EVENTOS ---
     try {
         detectHandler(conn);
     } catch (e) {
@@ -119,7 +117,29 @@ async function startBot() {
         let m = chatUpdate.messages[0];
         if (!m.message || m.key.fromMe) return;
 
-        m.reply = (text) => conn.sendMessage(m.key.remoteJid, { text }, { quoted: m });
+        // Propiedades base
+        m.chat = m.key.remoteJid;
+        m.sender = m.key.participant || m.key.remoteJid;
+        m.reply = (text) => conn.sendMessage(m.chat, { text }, { quoted: m });
+
+        // Construir m.quoted si hay mensaje citado
+        const msgType = Object.keys(m.message)[0];
+        const msgContent = m.message[msgType];
+        const contextInfo = msgContent?.contextInfo;
+
+        if (contextInfo?.quotedMessage) {
+            m.quoted = {
+                key: {
+                    remoteJid: m.chat,
+                    fromMe: contextInfo.participant === conn.user.id,
+                    id: contextInfo.stanzaId,
+                    participant: contextInfo.participant
+                },
+                message: contextInfo.quotedMessage
+            };
+        } else {
+            m.quoted = null;
+        }
 
         // --- EJECUCIÓN ANTI-LINK ---
         await antiLinkHandler(conn, m);
