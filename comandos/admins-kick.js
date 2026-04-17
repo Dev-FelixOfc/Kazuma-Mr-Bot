@@ -4,7 +4,7 @@ const kickCommand = {
     name: 'kick',
     alias: ['ban', 'remove', 'eliminar', 'sacar'],
     category: 'admin',
-    admin: true, 
+    isAdmin: true, 
     botAdmin: true, 
     isGroup: true,
     noPrefix: true,
