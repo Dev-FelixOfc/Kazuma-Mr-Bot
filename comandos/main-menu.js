@@ -90,7 +90,7 @@ const menuCommand = {
                         title: 'Kazuma',
                         body: 'Kazuma Bot | Developed by félix',
                         thumbnailUrl: 'https://files.catbox.moe/9ssbf9.jpg', 
-                        sourceUrl: 'https://panel.kurayamihost.ooguy.com', 
+                        sourceUrl: 'https://kazuma.giize.com', 
                         mediaType: 1,
                         renderLargerThumbnail: true, 
                         showAdAttribution: false 
