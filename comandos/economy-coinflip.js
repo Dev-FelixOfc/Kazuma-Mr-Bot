@@ -43,7 +43,7 @@ const flipCommand = {
                 const frase = flipFrases.win[Math.floor(Math.random() * flipFrases.win.length)];
                 
                 await conn.sendMessage(m.chat, { 
-                    text: `*${config.visuals.emoji3}* \`¡GANASTE!\` (30% Prob)\n\nSalió: *${result.toUpperCase()}*\n${frase}\n\n> *Cartera:* ¥${db[user].wallet.toLocaleString()}`
+                    text: `*${config.visuals.emoji3}* \`¡GANASTE!\` *${config.visuals.emoji2}*\n\nSalió: *${result.toUpperCase()}*\n${frase}\n\n> *Cartera:* ¥${db[user].wallet.toLocaleString()}`
                 }, { quoted: m });
             } else {
                 if (db[user].wallet >= bet) {
@@ -55,7 +55,7 @@ const flipCommand = {
                 const frase = flipFrases.lose[Math.floor(Math.random() * flipFrases.lose.length)];
                 
                 await conn.sendMessage(m.chat, { 
-                    text: `*${config.visuals.emoji2}* \`PERDISTE\` (70% Prob)\n\nSalió: *${result.toUpperCase()}*\n${frase}\n\n> *Balance actualizado.*`
+                    text: `*${config.visuals.emoji2}* \`PERDISTE\` *${config.visuals.emoji2}*\n\nSalió: *${result.toUpperCase()}*\n${frase}\n\n> *Balance actualizado.*`
                 }, { quoted: m });
             }
 
