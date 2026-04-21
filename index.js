@@ -30,6 +30,7 @@ const rl = createInterface({ input: process.stdin, output: process.stdout });
 const question = (text) => new Promise((resolve) => rl.question(text, resolve));
 
 global.commands = new Map();
+global.lastMessageMap = new Map();
 
 global.loadCommands = async () => {
     process.stdout.write(chalk.cyan('  [⚙️] Cargando módulos de comandos... '));
@@ -116,9 +117,11 @@ async function startBot() {
 
         m.chat = m.key.remoteJid;
         m.sender = m.key.participant || m.key.remoteJid;
-        
+
+        global.lastMessageMap.set(m.sender, Date.now());
+
         m.reply = (text) => conn.sendMessage(m.chat, { text }, { quoted: m });
-        
+
         m.download = () => {
             const msg = m.message.imageMessage || m.message.videoMessage || m.message.stickerMessage || m.message.audioMessage || m.message.documentMessage;
             if (!msg) return null;
