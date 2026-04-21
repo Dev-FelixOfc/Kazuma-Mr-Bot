@@ -12,28 +12,24 @@ const pingCommand = {
     run: async (conn, m) => {
         try {
             const start = Date.now();
-            const { key } = await m.reply(`*${config.visuals.emoji2}* \`Probando...\``);
+            // Enviamos un mensaje de espera simple primero
+            const { key } = await m.reply(`*${config.visuals.emoji2}* \`Midiendo velocidad...\``);
             const end = Date.now();
             const latencia = end - start;
 
-            // Intentamos enviar con la estructura de ExternalAdReply pero optimizada
-            await conn.sendMessage(m.chat, { 
-                text: `*${config.visuals.emoji3}* \`KAZUMA PING\` *${config.visuals.emoji3}*\n\n*${config.visuals.emoji4} Velocidad:* ${latencia} ms\n*${config.visuals.emoji} Estado:* Online`,
-                contextInfo: {
-                    externalAdReply: {
-                        title: 'KAZUMA - SPEED TEST',
-                        body: `Latencia: ${latencia} ms`,
-                        thumbnailUrl: config.visuals.img1,
-                        sourceUrl: 'https://www.instagram.com/dev.felixofc', // Pon una URL real siempre
-                        mediaType: 1,
-                        showAdAttribution: false,
-                        renderLargerThumbnail: false // Prueba en false primero
-                    }
-                }
-            }, { edit: key });
+            const textoPing = `*${config.visuals.emoji3}* \`KAZUMA PING\` *${config.visuals.emoji3}*\n\n*${config.visuals.emoji4} Velocidad:* ${latencia} ms\n*${config.visuals.emoji} Estado:* Online`;
+
+            // Usamos la función mágica de tu base
+            // Estructura según tu ejemplo: (jid, texto, opciones, mensaje_original)
+            await conn.sendContextInfoIndex(m.chat, textoPing, {}, m);
+
+            // Opcional: Borramos el "Midiendo velocidad" para que no estorbe
+            await conn.sendMessage(m.chat, { delete: key });
 
         } catch (err) {
-            console.error('Error en ping:', err);
+            console.error('Error en comando ping con Index:', err);
+            // Si la función fallara por algún motivo de parámetros, intentamos un fallback
+            m.reply(`🚀 *Latencia:* ${Date.now() - start} ms`);
         }
     }
 };
