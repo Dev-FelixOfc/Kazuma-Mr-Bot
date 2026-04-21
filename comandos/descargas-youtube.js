@@ -15,14 +15,12 @@ const youtubeCommand = {
 
         if (!isUrl || commandName === 'ytsearch' || commandName === 'yts') {
             try {
-                await m.reply(`*✿︎* \`Buscando en YouTube\` *✿︎*\n\nKazuma está localizando el mejor resultado para: *${text}*...\n\n> ⏳ Consultando API de búsqueda...`);
-
                 const searchUrl = `https://nex-magical.vercel.app/search/youtube?q=${encodeURIComponent(text)}&apikey=${apiKey}`;
                 const resSearch = await fetch(searchUrl);
                 const dataSearch = await resSearch.json();
 
                 if (!dataSearch.status || !dataSearch.result || dataSearch.result.length === 0) {
-                    return m.reply('*❁* `Sin Resultados` *❁*\n\nNo se encontró nada para esa búsqueda.');
+                    return m.reply('*❁* `Sin Resultados` *❁*');
                 }
 
                 if (commandName === 'ytsearch' || commandName === 'yts') {
@@ -36,7 +34,6 @@ const youtubeCommand = {
                 text = dataSearch.result[0].link;
 
             } catch (err) {
-                console.error('Error en Búsqueda:', err);
                 return m.reply('*❁* `Error de Búsqueda` *❁*');
             }
         }
@@ -46,13 +43,11 @@ const youtubeCommand = {
         const apiUrl = `https://nex-magical.vercel.app/download/${type.toLowerCase()}?url=${encodeURIComponent(text)}&apikey=${apiKey}`;
 
         try {
-            await m.reply(`*✿︎* \`Procesando ${type}\` *✿︎*\n\nExtrayendo contenido del enlace encontrado...\n\n> ⏳ Preparando archivo final...`);
-
             const res = await fetch(apiUrl);
             const data = await res.json();
 
             if (!data.status || !data.result.url) {
-                return m.reply('*❁* `Error de Descarga` *❁*\n\nNo se pudo obtener el archivo de este enlace.');
+                return m.reply('*❁* `Error de Descarga` *❁*');
             }
 
             const downloadUrl = data.result.url;
@@ -78,7 +73,6 @@ const youtubeCommand = {
             }
 
         } catch (err) {
-            console.error('Error en Descarga Final:', err);
             m.reply('*❁* `Error Crítico` *❁*');
         }
     }
