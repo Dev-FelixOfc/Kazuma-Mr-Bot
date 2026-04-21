@@ -15,7 +15,6 @@ const menuCommand = {
         try {
             const prefix = usedPrefix || '#';
             const botType = config.getBotType(conn);
-            const totalCommands = global.commands.size;
 
             const textoMenu = `¡Hola! Soy ${config.botName} *(${botType})*.
 Aqui está mi lista de comandos
@@ -29,7 +28,7 @@ Aqui está mi lista de comandos
 ┃ ✐ *Official channel* »
 ┃ https://whatsapp.com/channel/0029Vb6sgWdJkK73qeLU0J0N
 ╰━━━━━━━━━━━━━━━━━━━╯
-‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎
+
 *» (❍ᴥ❍ʋ) \`MAIN\` «*
 > ꕥ Comandos principales del bot.
 
@@ -92,7 +91,7 @@ Aqui está mi lista de comandos
 *✿︎ ${prefix}play • ${prefix}playaudio*
 > ❀ Descarga videos de YouTube como audio.
 *✿︎ ${prefix}playdoc*
-Descarga videos de YouTube en formato de documento.
+> ❀ Descarga videos de YouTube en formato de documento.
 
 *» (❍ᴥ❍ʋ) \`TOOLS\` «*
 > ꕥ Herramientas útiles.
@@ -106,19 +105,9 @@ Descarga videos de YouTube en formato de documento.
 *✿︎ ${prefix}update*
 > ❀ Actualiza el servidor via Git.`;
 
-            await conn.sendMessage(m.key.remoteJid, { 
-                text: textoMenu,
-                contextInfo: {
-                    externalAdReply: {
-                        title: `${config.botName}`,
-                        body: 'Kazuma Bot | Developed by Félix',
-                        thumbnailUrl: config.visuals.img1, 
-                        sourceUrl: 'https://kazuma.giize.com', 
-                        mediaType: 1,
-                        renderLargerThumbnail: true, 
-                        showAdAttribution: false 
-                    }
-                }
+            await conn.sendMessage(m.chat, { 
+                image: { url: config.visuals.img1 }, 
+                caption: textoMenu
             }, { quoted: m });
 
         } catch (err) {
