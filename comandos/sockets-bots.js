@@ -32,7 +32,7 @@ export default {
                 });
             }
 
-            const texto = `*${config.visuals.emoji3}* \`LISTA DE SOCKETS ACTIVOS\` *${config.visuals.emoji3}*\n\n*❁ Principal » 1*\n*❀ Subs Totales » ${totalSubs}*\n\n*❀ DETALLE:*\n${listaBots}\n> *${config.visuals.emoji2}* \`RED DE BOTS ONLINE\``;
+            const texto = `*${config.visuals.emoji3}* \`LISTA DE SOCKETS ACTIVOS\` *${config.visuals.emoji3}*\n\n*❁ Principal » 1*\n*❀ Subs Totales » ${totalSubs}*\n\n*❀ DETALLE:*\n${listaBots}`;
 
             await conn.sendMessage(m.chat, { text: texto.trim() }, { quoted: m });
 
