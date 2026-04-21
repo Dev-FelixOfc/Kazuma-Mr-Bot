@@ -13,31 +13,19 @@ const backupCommand = {
     isAdmin: false,
     isGroup: false,
 
-    run: async (conn, m, args, usedPrefix) => {
+    run: async (conn, m) => {
         try {
             if (!fs.existsSync(dbPath)) {
-                return m.reply(`*${config.visuals.emoji2}* \`Error\` *${config.visuals.emoji2}*\n\nNo se encontró la base de datos economy.json.`);
+                return m.reply(`*${config.visuals.emoji2}* \`Error\`\nSin base de datos.`);
             }
 
             const dbContent = fs.readFileSync(dbPath, 'utf-8');
-            
-            const textoExport = `*${config.visuals.emoji3}* \`BACKUP ECONOMÍA\` *${config.visuals.emoji3}*\n\n*${config.visuals.emoji} Archivo:* economy.json\n*${config.visuals.emoji4} Estado:* Sincronizado\n\n\`\`\`${dbContent}\`\`\``;
+            const texto = `*${config.visuals.emoji3}* \`BACKUP ECONOMÍA\` *${config.visuals.emoji3}*\n\n*${config.visuals.emoji} Archivo:* economy.json\n\n\`\`\`${dbContent}\`\`\``;
 
-            await conn.sendMessage(m.chat, { 
-                text: textoExport,
-                contextInfo: {
-                    externalAdReply: {
-                        title: 'KAZUMA - DATABASE',
-                        body: 'Respaldo general de economía',
-                        thumbnailUrl: config.visuals.img1,
-                        mediaType: 1,
-                        showAdAttribution: false
-                    }
-                }
-            }, { quoted: m });
+            await conn.sendMessage(m.chat, { text: texto }, { quoted: m });
 
         } catch (e) {
-            m.reply(`*${config.visuals.emoji2}* \`Error\` *${config.visuals.emoji2}*\nNo se pudo extraer la base de datos.`);
+            m.reply(`*${config.visuals.emoji2}* Error en el backup.`);
         }
     }
 };
