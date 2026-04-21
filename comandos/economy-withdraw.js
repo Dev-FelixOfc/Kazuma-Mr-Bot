@@ -8,6 +8,11 @@ const withdrawCommand = {
     name: 'withdraw',
     alias: ['ret', 'w', 'retirar', 'wd'],
     category: 'economy',
+    isOwner: false,
+    noPrefix: true,
+    isAdmin: false,
+    isGroup: false,
+
     run: async (conn, m, args) => {
         try {
             const user = m.sender.split('@')[0];
