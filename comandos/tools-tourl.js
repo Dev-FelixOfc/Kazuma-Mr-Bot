@@ -15,28 +15,34 @@ const tourlCommand = {
 
         const quoted = m.quoted ? m.quoted : m;
         const mime = (quoted.msg || quoted).mimetype || '';
+        const msgType = quoted.mtype || quoted.type || '';
 
-        if (!/image/.test(mime)) {
-            return m.reply(`*❁* \`Error de Uso\` *❁*\n\nResponde a una imagen o envía una con el comando *${usedPrefix}tourl* para convertirla en enlace.`);
+        const isMedia = /image|video|sticker/.test(mime) || 
+                        /imageMessage|videoMessage|stickerMessage/.test(msgType);
+
+        if (!isMedia) {
+            return m.reply(`*❁* \`Sin Multimedia\` *❁*\n\nNo detecto ninguna imagen o archivo.\n\n*✿︎* Responde a una imagen, sticker o video.\n*✿︎* O envía uno con el comando *${usedPrefix}tourl*`);
         }
 
         try {
-            await m.reply('*✿︎* \`Procesando...\` *✿︎*\n\n> Subiendo imagen a Yotsuba Cloud.');
+            await m.reply('*✿︎* \`Procesando Multimedia...\` *✿︎*\n\n> Generando enlace en Yotsuba Cloud.');
 
             const media = await quoted.download();
 
+            if (!media) throw new Error('No se pudo descargar el medio.');
+
             const link = await uploadToYotsuba(media);
 
-            const textoExito = `*✿︎* \`Carga Exitosa\` *✿︎*\n\n*🚀 Enlace:* ${link}\n\n> Tu imagen ahora es pública y permanente en Yotsuba.`;
+            const textoExito = `*✿︎* \`Carga Exitosa\` *✿︎*\n\n*🚀 Enlace:* ${link}\n\n> Enlace generado para tu archivo multimedia.`;
 
             await conn.sendMessage(from, { 
                 text: textoExito,
                 contextInfo: {
                     externalAdReply: {
-                        title: 'YOTSUBA - CLOUD STORAGE',
-                        body: 'Enlace generado con éxito',
+                        title: 'KAZUMA - TOURURL SERVICE',
+                        body: 'Click para ver en el navegador',
                         thumbnailUrl: 'https://files.catbox.moe/9ssbf9.jpg', 
-                        sourceUrl: 'https://upload.yotsuba.giize.com',
+                        sourceUrl: link,
                         mediaType: 1,
                         renderLargerThumbnail: false,
                         showAdAttribution: false
@@ -45,8 +51,7 @@ const tourlCommand = {
             }, { quoted: m });
 
         } catch (err) {
-            console.error('Error en comando tourl:', err);
-            m.reply('*❁* \`Error Crítico\` *❁*\n\nHubo un fallo al intentar conectar con el servidor de Yotsuba.');
+            m.reply('*❁* \`Error en Servidor\` *❁*\n\nNo se pudo procesar la subida.');
         }
     }
 };
