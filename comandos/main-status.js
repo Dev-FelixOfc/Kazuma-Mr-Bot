@@ -1,8 +1,3 @@
-/* Código creado por Félix Ofc 
-por favor y no quites los créditos.
-https://github.com/Dev-FelixOfc 
-*/
-
 import os from 'os';
 import { config } from '../config.js';
 
@@ -17,7 +12,6 @@ const statusCommand = {
 
     run: async (conn, m) => {
         try {
-            // --- CÁLCULO DE TIEMPO ACTIVO ---
             const uptimeSeconds = process.uptime();
             const d = Math.floor(uptimeSeconds / (3600 * 24));
             const h = Math.floor((uptimeSeconds % (3600 * 24)) / 3600);
@@ -25,46 +19,29 @@ const statusCommand = {
             const s = Math.floor(uptimeSeconds % 60);
             const uptimeDisplay = `${d}d ${h}h ${m_time}m ${s}s`;
 
-            // --- CÁLCULO DE RAM ---
-            const totalRam = (os.totalmem() / (1024 * 1024)).toFixed(0);
-            const usedRam = ((os.totalmem() - os.freemem()) / (1024 * 1024)).toFixed(0);
-
-            // --- CÁLCULO DE CPU ---
+            const totalRam = (os.totalmem() / (1024 * 1024 * 1024)).toFixed(1);
+            const usedRam = ((os.totalmem() - os.freemem()) / (1024 * 1024 * 1024)).toFixed(1);
+            
             const cpus = os.cpus();
-            const cpuModel = cpus[0].model;
+            const cpuModel = cpus[0].model.replace(/CPU|@|inc.|Processor|Core\(TM\)|i[0-9]-/g, '').trim();
             const cpuCores = cpus.length; 
 
-            // --- CÁLCULO DE DISCO (Aproximado) ---
-            const totalDisk = "500MB"; 
+            const textoStatus = `*${config.visuals.emoji3}* \`SISTEMA KAZUMA\` *${config.visuals.emoji3}*
 
-            const textoStatus = `
-✿︎ Nombre del bot ᗒ *${config.botName}*
-❁ Tiempo activo ᗒ *${uptimeDisplay}*
-❀ Comandos usados ᗒ *${global.totalCommandsUsed || 0}*
+✿︎ Bot ᗒ *${config.botName}*
+❁ Uptime ᗒ *${uptimeDisplay}*
+❀ Comandos ᗒ *${global.totalCommandsUsed || 0}*
 
-ᗣ RAM ᗒ *${usedRam}MB / ${totalRam}MB*
-⁂ CPU ᗒ *${cpuCores} vCores* (${cpuModel.split(' ')[0]})
-𖧷 DISCO ᗒ *En uso / ${totalDisk}*
+ᗣ RAM ᗒ *${usedRam}GB / ${totalRam}GB*
+⁂ CPU ᗒ *${cpuCores} vCores*
+𖧷 Model ᗒ *${cpuModel}*
 
-> DEVELOPED BY FÉLIX OFC`.trim();
+> *${config.visuals.emoji2}* \`DEVELOPED BY FÉLIX OFC\``.trim();
 
-            await conn.sendMessage(m.key.remoteJid, { 
-                text: textoStatus,
-                contextInfo: {
-                    externalAdReply: {
-                        title: 'KAZUMA - SYSTEM STATUS',
-                        body: `Server: ${os.platform()} - ${os.arch()}`,
-                        // Nueva foto de Catbox
-                        thumbnailUrl: 'https://files.catbox.moe/5fli7o.jpg', 
-                        mediaType: 1,
-                        // MINIATURA PEQUEÑA (Solo en este comando)
-                        renderLargerThumbnail: false 
-                    }
-                }
-            }, { quoted: m });
+            await conn.sendMessage(m.chat, { text: textoStatus }, { quoted: m });
 
         } catch (err) {
-            console.error('Error en comando status:', err);
+            console.error(err);
         }
     }
 };
