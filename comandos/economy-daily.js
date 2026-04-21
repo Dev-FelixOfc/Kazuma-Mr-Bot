@@ -55,7 +55,7 @@ const dailyCommand = {
             db[user] = userData;
             fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
 
-            const textoDaily = `*${config.visuals.emoji3}* \`RECOMPENSA DIARIA\` *${config.visuals.emoji3}*\n\n¡Has reclamado tu recompensa de hoy!\n*${config.visuals.emoji5} Ganaste:* ¥${reward.toLocaleString()} Coins\n*${config.visuals.emoji7} Racha:* Día ${userData.streak}\n\n> Sigue así, mañana ganarás: *¥${nextReward.toLocaleString()}*`;
+            const textoDaily = `*${config.visuals.emoji3}* \`RECOMPENSA DIARIA\` *${config.visuals.emoji3}*\n\n¡Has reclamado tu recompensa de hoy!\n*${config.visuals.emoji2} Ganaste:* ¥${reward.toLocaleString()} Coins\n*${config.visuals.emoji4} Racha:* Día ${userData.streak}\n\n> Sigue así, mañana ganarás: *¥${nextReward.toLocaleString()}*`;
 
             await conn.sendMessage(m.chat, {
                 text: textoDaily,
