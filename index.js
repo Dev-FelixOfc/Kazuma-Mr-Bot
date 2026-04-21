@@ -113,7 +113,16 @@ async function startBot() {
 
     conn.ev.on('messages.upsert', async (chatUpdate) => {
         let m = chatUpdate.messages[0];
-        if (!m.message || m.key.fromMe) return;
+        if (!m.message) return;
+
+        // --- MODIFICACIÓN: AUTO-LECTURA DE COMANDOS ---
+        const bodyText = m.message.conversation || m.message.extendedTextMessage?.text || m.message.imageMessage?.caption || "";
+        const prefixes = config.allPrefixes || ['#', '!', '.'];
+        const isCmd = prefixes.some(p => bodyText.startsWith(p));
+
+        // Solo ignorar si es del bot Y no es un comando (evita bucles infinitos)
+        if (m.key.fromMe && !isCmd) return;
+        // ----------------------------------------------
 
         m.chat = m.key.remoteJid;
         m.sender = m.key.participant || m.key.remoteJid;
