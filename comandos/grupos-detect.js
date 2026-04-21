@@ -1,74 +1,29 @@
-/* KAZUMA MISTER BOT - EVENT DETECTOR (LOGIC) */
-import fs from 'fs';
-import path from 'path';
+export default {
+    name: 'tests',
+    alias: ['test', 'prueba'],
+    category: 'main',
+    noPrefix: true, // Permite que se ejecute escribiendo solo "tests"
 
-const databasePath = path.resolve('./jsons/grupos.json');
-
-export const detectHandler = async (conn) => {
-    // --- EVENTO: CAMBIOS EN PARTICIPANTES (ADMINS) ---
-    conn.ev.on('group-participants.update', async (update) => {
+    run: async (conn, m) => {
         try {
-            const { id, participants, action, author } = update;
-            
-            if (!fs.existsSync(databasePath)) return;
-            const db = JSON.parse(fs.readFileSync(databasePath, 'utf-8'));
-            if (!db[id]?.detect) return;
+            const texto = 'El mensaje se ve.';
 
-            for (let user of participants) {
-                const phone = user.split('@')[0];
-                const actor = author ? author.split('@')[0] : 'un Administrador';
-                let aviso = '';
-
-                if (action === 'promote') {
-                    aviso = `*✿︎* \`Nuevo Administrador\` *✿︎*\n\nEl usuario *@${phone}* ha sido promovido a Administrador por *@${actor}*.\n\n> ¡Felicidades por el nuevo cargo!`;
-                } else if (action === 'demote') {
-                    aviso = `*❁* \`Remoción de Cargo\` *❁*\n\nEl usuario *@${phone}* fue degradado de su cargo por *@${actor}*.\n\n> ¡Seguimos trabajando!`;
+            await conn.sendMessage(m.chat, { 
+                text: texto,
+                contextInfo: {
+                    externalAdReply: {
+                        title: 'KAZUMA - TEST SYSTEM',
+                        body: 'Validación de auto-respuesta activa',
+                        thumbnailUrl: 'https://upload.yotsuba.giize.com/u/a4NBj9rH.jpg',
+                        mediaType: 1,
+                        showAdAttribution: true,
+                        renderLargerThumbnail: false
+                    }
                 }
+            }, { quoted: m });
 
-                if (aviso) {
-                    await conn.sendMessage(id, { 
-                        text: aviso, 
-                        mentions: [user, author].filter(Boolean) 
-                    });
-                }
-            }
         } catch (e) {
-            console.error("Error en Detect Participantes:", e);
+            console.error("Error en comando tests:", e);
         }
-    });
-
-    // --- EVENTO: CAMBIOS EN AJUSTES DEL GRUPO (NOMBRE/FOTO) ---
-    conn.ev.on('messages.upsert', async ({ messages }) => {
-        try {
-            const m = messages[0];
-            if (!m.messageStubType) return;
-            const chat = m.key.remoteJid;
-
-            if (!fs.existsSync(databasePath)) return;
-            const db = JSON.parse(fs.readFileSync(databasePath, 'utf-8'));
-            if (!db[chat]?.detect) return;
-
-            const actor = m.key?.participant || m.participant || chat;
-            const phone = actor.split('@')[0];
-            let cambio = '';
-
-            // Mapeo de StubTypes de Baileys
-            if (m.messageStubType == 21) cambio = `cambió el nombre a: *${m.messageStubParameters[0]}*`;
-            if (m.messageStubType == 22) cambio = `actualizó la foto del grupo.`;
-            if (m.messageStubType == 24) cambio = `editó la descripción del grupo.`;
-            if (m.messageStubType == 25) cambio = `cambió los permisos de edición a: *${m.messageStubParameters[0] == 'on' ? 'Solo Admins' : 'Todos'}*`;
-
-            if (cambio) {
-                await conn.sendMessage(chat, { 
-                    text: `*✿︎* \`Aviso de Grupo\` *✿︎*\n\n*@${phone}* ${cambio}\n\n> Kazuma detectó el cambio.`,
-                    mentions: [actor]
-                });
-            }
-        } catch (e) {
-            console.error("Error en Detect Stub:", e);
-        }
-    });
+    }
 };
-
-// Export por defecto para compatibilidad
-export default detectHandler;
