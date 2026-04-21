@@ -19,7 +19,7 @@ export const config = {
     visuals: {
         line: '━',
         color: 'magenta',
-        emoji: '✰',
+        emoji1: '✰',
         emoji2: '❁',
         emoji3: '✿',
         emoji4: '❀',
