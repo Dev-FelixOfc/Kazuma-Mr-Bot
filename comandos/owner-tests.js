@@ -1,24 +1,25 @@
+import { config } from '../config.js'; // Importamos la configuración
+
 export default {
     name: 'tests',
     alias: ['test', 'prueba'],
     category: 'main',
-    noPrefix: true, // Permite que se ejecute escribiendo solo "tests"
+    noPrefix: true, // Se ejecuta escribiendo solo "tests"
 
     run: async (conn, m) => {
         try {
-            const texto = 'El mensaje se ve.';
+            // Usamos la URL que ya tienes configurada como img1 en config.js
+            const imagenUrl = config.visuals.img1;
+            const texto = '✿︎ \`El mensaje se ve.\` ✿︎\n\n> Validación de auto-respuesta activa en red Yotsuba.';
 
             await conn.sendMessage(m.chat, { 
-                text: texto,
+                image: { url: imagenUrl }, // Cargamos la imagen desde la config
+                caption: texto,
+                // Agregamos contextInfo ligero para estética pero sin formato de anuncio
                 contextInfo: {
-                    externalAdReply: {
-                        title: 'KAZUMA - TEST SYSTEM',
-                        body: 'Validación de auto-respuesta activa',
-                        thumbnailUrl: 'https://upload.yotsuba.giize.com/u/a4NBj9rH.jpg',
-                        mediaType: 1,
-                        showAdAttribution: true,
-                        renderLargerThumbnail: false
-                    }
+                    showAdAttribution: false,
+                    forwardingScore: 0,
+                    isForwarded: false
                 }
             }, { quoted: m });
 
