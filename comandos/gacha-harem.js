@@ -15,7 +15,6 @@ const haremCommand = {
             let targetJid = m.sender;
             let page = 1;
 
-            // Lógica para detectar página y mención en los argumentos
             if (args.length > 0) {
                 const lastArg = args[args.length - 1];
                 if (!isNaN(lastArg)) {
@@ -53,10 +52,8 @@ const haremCommand = {
                 }
             }
 
-            // Ordenar por valor (Mayor a Menor)
             misPjs.sort((a, b) => b.value - a.value);
 
-            // Configuración de paginación (5 por página)
             const itemsPerPage = 5;
             const totalPages = Math.ceil(misPjs.length / itemsPerPage);
 
@@ -68,7 +65,6 @@ const haremCommand = {
             const end = start + itemsPerPage;
             const currentPjs = misPjs.slice(start, end);
 
-            // Construcción del mensaje
             let txt = `*${config.visuals.emoji3} \`HAREM DEL USUARIO\` ${config.visuals.emoji3}*\n`;
             txt += `» @${targetId} (${misPjs.length} personajes)\n`;
             txt += `*Página:* ${page} de ${totalPages}\n\n`;
@@ -85,7 +81,6 @@ const haremCommand = {
             }, { quoted: m });
 
         } catch (e) {
-            console.error(e);
             m.reply(`*${config.visuals.emoji2}* Error al mostrar el harem.`);
         }
     }
