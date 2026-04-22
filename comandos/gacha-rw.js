@@ -6,10 +6,6 @@ const gachaPath = path.resolve('./config/database/gacha/gacha_list.json');
 const ecoPath = path.resolve('./config/database/economy/economy.json');
 const cooldowns = new Map();
 
-// MEMORIA GLOBAL: Para que el comando claim pueda leerla
-if (!global.db) global.db = {};
-if (!global.db.rolls) global.db.rolls = {};
-
 const rwCommand = {
     name: 'rw',
     alias: ['roll', 'waifu'],
@@ -32,7 +28,6 @@ const rwCommand = {
             const saldo = ecoDB[user]?.wallet || 0;
             let keys = Object.keys(gachaDB);
 
-            // Filtro de dificultad
             if (saldo < 45000 && Math.random() > 0.05) {
                 keys = keys.filter(id => gachaDB[id].value < 40000);
             }
@@ -54,9 +49,13 @@ const rwCommand = {
                 mentions: pj.owner ? [pj.owner + '@s.whatsapp.net'] : []
             }, { quoted: m });
 
-            // GUARDAMOS EL ID DEL MENSAJE EN LA MEMORIA
-            // Así el claim sabrá que este mensaje específico pertenece a este personaje
-            global.db.rolls[sent.key.id] = { id: randomId, name: pj.name };
+            // --- ESTA ES LA CLAVE ---
+            // Guardamos el roll en la base de datos global del chat
+            if (!global.db.data.chats[m.chat].rolls) global.db.data.chats[m.chat].rolls = {};
+            global.db.data.chats[m.chat].rolls[sent.key.id] = { 
+                id: randomId, 
+                expiresAt: ahora + 60000 
+            };
             
             cooldowns.set(user, ahora);
 
