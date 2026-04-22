@@ -22,6 +22,7 @@ import { pixelHandler } from './pixel.js';
 
 import { detectHandler } from './comandos/grupos-detect.js';
 import antiLinkHandler from './comandos/grupos-antilink.js';
+import { loadAllSubBots } from './sockets/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -110,13 +111,14 @@ async function startBot() {
 
     conn.ev.on('creds.update', saveCreds);
 
-    conn.ev.on('connection.update', (update) => {
+    conn.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'close') {
             const shouldRestart = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldRestart) startBot();
         } else if (connection === 'open') {
             console.log(chalk.greenBright.bold('\n  [✨] ¡KAZUMA CONECTADO!'));
+            await loadAllSubBots(conn);
         }
     });
 
@@ -162,7 +164,7 @@ async function startBot() {
                 mimetype: q?.mimetype || '',
                 key: {
                     remoteJid: m.chat,
-                    fromMe: contextInfo.participant === conn.user.id,
+                    fromMe: contextInfo.participant === conn.user.id.split(':')[0] + '@s.whatsapp.net',
                     id: contextInfo.stanzaId,
                     participant: contextInfo.participant
                 },
