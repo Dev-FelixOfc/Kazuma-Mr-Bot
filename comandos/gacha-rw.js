@@ -40,7 +40,7 @@ const rwCommand = {
             caption += `*Nombre:* ${pj.name}\n`;
             caption += `*Fuente:* ${pj.source}\n`;
             caption += `*Valor:* ¥${pj.value.toLocaleString()}\n`;
-            caption += `*Estado:* ${pj.status === 'libre' ? '🟢 LIBRE' : '🔴 DOMADO'}\n`;
+            caption += `*Estado:* ${pj.status === 'libre' ? 'Libre' : 'Domado'}\n`;
             if (pj.owner) caption += `*Dueño:* @${pj.owner}\n`;
 
             const sent = await conn.sendMessage(m.chat, { 
