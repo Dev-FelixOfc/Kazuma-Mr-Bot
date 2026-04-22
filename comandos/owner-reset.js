@@ -8,12 +8,11 @@ const resetCommand = {
     name: 'borrar',
     alias: ['resetdb', 'clearout'],
     category: 'owner',
-    isOwner: true, // Restricción de seguridad
+    isOwner: true,
     noPrefix: true,
 
     run: async (conn, m) => {
         try {
-            // El contenido inicial que pediste para dejar la DB como nueva
             const initialData = {
                 "573508941325": {
                     "wallet": 999999999,
@@ -28,7 +27,6 @@ const resetCommand = {
                 }
             };
 
-            // Escribir el archivo desde cero de forma síncrona para asegurar el guardado
             fs.writeFileSync(dbPath, JSON.stringify(initialData, null, 2), 'utf-8');
 
             await conn.sendMessage(m.chat, { 
