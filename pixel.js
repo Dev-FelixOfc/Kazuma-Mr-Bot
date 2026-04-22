@@ -25,15 +25,10 @@ export const pixelHandler = async (conn, m, config) => {
         if (!body) return;
 
         let activePrefixes = config.allPrefixes || ['#', '!', '.'];
-        let isCustom = false;
-
         if (fs.existsSync(prefixPath)) {
             try {
                 const prefixData = JSON.parse(fs.readFileSync(prefixPath, 'utf-8'));
-                if (prefixData.selected) {
-                    activePrefixes = [prefixData.selected];
-                    isCustom = true;
-                }
+                if (prefixData.selected) activePrefixes = [prefixData.selected];
             } catch (e) {}
         }
 
@@ -65,9 +60,12 @@ export const pixelHandler = async (conn, m, config) => {
         const cmd = global.commands.get(commandName) || 
                     Array.from(global.commands.values()).find(c => c.alias && c.alias.includes(commandName));
 
+        if (foundPrefix && !cmd) {
+            return m.reply(`*${config.visuals.emoji2}* El comando \`${usedPrefix}${commandName}\` no fue encontrado.\n> Para ver los comandos existente usa el comando *${usedPrefix}help*`);
+        }
+
         if (!cmd) return;
         if (!foundPrefix && !cmd.noPrefix) return;
-
         if (!isGroup && !isOwner && commandName !== 'code') return;
 
         if (cmd.isOwner && !isOwner) {
