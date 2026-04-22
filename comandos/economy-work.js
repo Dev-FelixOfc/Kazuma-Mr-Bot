@@ -32,7 +32,7 @@ const workCommand = {
             const frase = workFrases[Math.floor(Math.random() * workFrases.length)];
 
             db[user].wallet += reward;
-            db[user].work.lastUsed = now; // Guardamos el tiempo en el JSON
+            db[user].work.lastUsed = now; 
             
             fs.writeFileSync(dbPath, JSON.stringify(db, null, 2), 'utf-8');
 
