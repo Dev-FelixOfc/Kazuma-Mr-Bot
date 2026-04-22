@@ -68,6 +68,8 @@ const menuCommand = {
 > ❀ Hazte SubBot de ${config.botName}.
 *✿︎ ${prefix}bots • ${prefix}sockets*
 > ❀ Mira la lista de sockets activos.
+*✿︎ ${prefix}delsession*
+> ❀ Elimina tu sesión de subbot.
 
 *» (❍ᴥ❍ʋ) \`GESTIÓN\` «*
 > ꕥ Comandos de grupo.
@@ -104,8 +106,12 @@ const menuCommand = {
 *» (❍ᴥ❍ʋ) \`OWNER\` «*
 > ꕥ Comandos del creador.
 
-*✿︎ ${prefix}update*
-> ❀ Actualiza el servidor via Git.`;
+*✿︎ ${prefix}update • ${prefix}up*
+> ❀ Actualiza el servidor via Git.
+*✿︎ ${prefix}backup (db)*
+> ❀ El bot envía el contenido actual de la base de datos pedida.
+*✿︎ ${prefix}deletesession all/(session)*
+> ❀ El bot elimina todas las sesiones de subbots o una sola.`;
 
             await conn.sendMessage(m.chat, { 
                 image: { url: config.visuals.img1 }, 
