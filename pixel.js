@@ -5,7 +5,6 @@ import { logger } from './config/print.js';
 
 const databasePath = path.join(process.cwd(), 'jsons', 'preferencias.json');
 const sessionsPath = path.join(process.cwd(), 'sesiones_subbots');
-const mainSessionPath = path.join(process.cwd(), 'sesion_bot');
 
 export const pixelHandler = async (conn, m, config) => {
     try {
@@ -33,26 +32,20 @@ export const pixelHandler = async (conn, m, config) => {
             ? body.slice(foundPrefix.length).trim().split(/ +/).shift().toLowerCase()
             : body.trim().split(/ +/).shift().toLowerCase();
 
+        const myJid = conn.user.id.split('@')[0].split(':')[0].replace(/\D/g, '');
+
         if (isGroup) {
-            const comandosGestion = ['setprimary', 'delprimary'];
+            const comandosGestion = ['setprimary', 'delprimary', 'sockets', 'bots'];
 
             if (!comandosGestion.includes(commandName)) {
-                const myJid = conn.user.id.split('@')[0].split(':')[0].replace(/[^0-9]/g, '');
-
                 if (fs.existsSync(databasePath)) {
                     let db = JSON.parse(fs.readFileSync(databasePath, 'utf-8'));
 
                     if (db[chat]) {
-                        const primaryNumber = db[chat].replace(/[^0-9]/g, '');
+                        const primaryNumber = db[chat].replace(/\D/g, '');
                         
-                        const isSubActive = fs.existsSync(path.join(sessionsPath, primaryNumber));
-                        const isMainActive = fs.existsSync(mainSessionPath);
-
-                        if (isSubActive || (isMainActive && primaryNumber === myJid)) {
-                            if (myJid !== primaryNumber) return; 
-                        } else {
-                            delete db[chat];
-                            fs.writeFileSync(databasePath, JSON.stringify(db, null, 2));
+                        if (myJid !== primaryNumber) {
+                            return; 
                         }
                     }
                 }
@@ -66,23 +59,20 @@ export const pixelHandler = async (conn, m, config) => {
                     Array.from(global.commands.values()).find(c => c.alias && c.alias.includes(commandName));
 
         if (!cmd) return;
-
         if (!foundPrefix && !cmd.noPrefix) return;
-
         if (!isGroup && !isOwner && commandName !== 'code') return;
 
         if (cmd.isOwner && !isOwner) {
-            return m.reply(`*❁* \`ACCESO DENEGADO\` *❁*\n\nID: \`${sender}\`\n\n> ¡Solo mi desarrollador puede usar esto!`);
+            return m.reply(`*❁* \`ACCESO DENEGADA\` *❁*\n\nID: \`${sender}\`\n\n> ¡Solo mi desarrollador puede usar esto!`);
         }
 
         if (cmd.isGroup && !isGroup) {
-            return m.reply('*✿︎* \`Aviso\` *✿︎*\n\nEste comando solo puede ser utilizado en grupos.\n\n> ¡Inténtalo en un chat grupal!');
+            return m.reply('*✿︎* \`Aviso\` *✿︎*\n\nEste comando solo puede ser utilizado en grupos.');
         }
 
         if (!global.db.data.chats[chat]) global.db.data.chats[chat] = { rolls: {} };
 
         logger(m, conn);
-
         await cmd.run(conn, m, args, usedPrefix, commandName, text, usedPrefix);
 
     } catch (err) {
