@@ -6,7 +6,7 @@ const tarjetasPath = path.resolve('./config/database/economy/targets.json');
 const economyPath = path.resolve('./config/database/economy/economy.json');
 
 const claimCard = {
-    name: 'claim',
+    name: 'target',
     alias: ['usartarjeta', 'tarjeta'],
     category: 'economy',
     isGroup: false,
