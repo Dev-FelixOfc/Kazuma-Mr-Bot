@@ -23,10 +23,8 @@ const updateCommand = {
         try {
             await conn.sendMessage(from, { react: { text: '⌚', key: m.key } });
 
-            // Ejecutamos git pull
             const { stdout } = await execPromise('git pull');
 
-            // --- Lógica de "Sin Cambios" ---
             if (stdout.includes('Already up to date')) {
                 await conn.sendMessage(from, { react: { text: '⏸️', key: m.key } });
                 return await conn.sendMessage(from, { 
@@ -34,7 +32,6 @@ const updateCommand = {
                 }, { quoted: m });
             }
 
-            // Si hay cambios, recargamos comandos
             if (global.loadCommands) {
                 await global.loadCommands(); 
             }
