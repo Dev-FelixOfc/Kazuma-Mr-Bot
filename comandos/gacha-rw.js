@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const gachaPath = path.resolve('./config/database/gacha/gacha_list.json');
-const ecoPath = path.resolve('./config/database/economy/economy.json'); // Ruta corregida
+const ecoPath = path.resolve('./config/database/economy/economy.json');
 const cooldowns = new Map();
 
 const rwCommand = {
@@ -14,25 +14,21 @@ const rwCommand = {
 
     run: async (conn, m) => {
         try {
-            const user = m.sender.split('@')[0].split(':')[0]; // Ajustado a tu sistema
+            const user = m.sender.split('@')[0].split(':')[0];
             const ahora = Date.now();
             const tiempoEspera = 10 * 60 * 1000;
 
             if (cooldowns.has(user)) {
                 const restante = cooldowns.get(user) + tiempoEspera - ahora;
-                if (restante > 0) return m.reply(`*${config.visuals.emoji2}* ¡Cálmate! Espera ${Math.ceil(restante / 60000)} min para otro roll.`);
+                if (restante > 0) return m.reply(`*${config.visuals.emoji2}* ¡Cálmate! Espera ${Math.ceil(restante / 60000)} min.`);
             }
 
-            if (!fs.existsSync(gachaPath)) return m.reply('Error: Falta gacha_list.json');
-            
             let gachaDB = JSON.parse(fs.readFileSync(gachaPath, 'utf-8'));
             let ecoDB = JSON.parse(fs.readFileSync(ecoPath, 'utf-8'));
             
-            // Usamos la estructura exacta de tu economía
             const saldo = ecoDB[user]?.wallet || 0;
             let keys = Object.keys(gachaDB);
 
-            // Filtro de dificultad por pobreza
             if (saldo < 45000) {
                 if (Math.random() > 0.05) { 
                     keys = keys.filter(id => gachaDB[id].value < 40000);
@@ -44,10 +40,11 @@ const rwCommand = {
             cooldowns.set(user, ahora);
 
             let caption = `*» (❍ᴥ❍ʋ) \`GACHA ROLL\` «*\n\n`;
-            caption += `*Nombre:* \`${pj.name}\`\n`;
-            caption += `*Fuente:* \`${pj.source}\`\n`;
+            caption += `*ID »* ${randomId}\n`; // ID visible para el claim
+            caption += `*Nombre:* ${pj.name}\n`;
+            caption += `*Fuente:* ${pj.source}\n`;
             caption += `*Valor:* ¥${pj.value.toLocaleString()}\n`;
-            caption += `*Estado:* ${pj.status === 'libre' ? 'LIBRE' : 'DOMADO'}\n`;
+            caption += `*Estado:* ${pj.status === 'libre' ? '🟢 LIBRE' : '🔴 DOMADO'}\n`;
             if (pj.owner) caption += `*Dueño:* @${pj.owner}\n`;
 
             await conn.sendMessage(m.chat, { 
@@ -57,7 +54,6 @@ const rwCommand = {
             }, { quoted: m });
 
         } catch (e) {
-            console.error(e);
             m.reply(`*${config.visuals.emoji2}* Error en el sistema Gacha.`);
         }
     }
