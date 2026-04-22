@@ -17,7 +17,7 @@ import { pixelHandler } from '../pixel.js';
 import { config } from '../config.js';
 
 const sessionsPath = path.resolve('./sesiones_subbots');
-if (!fs.existsSync(sessionsPath)) fs.mkdirSync(sessionsPath);
+if (!fs.existsSync(sessionsPath)) fs.mkdirSync(sessionsPath, { recursive: true });
 
 global.subBots = new Map();
 
@@ -47,16 +47,18 @@ export const startSubBot = async (userId, mainConn = null) => {
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
+        
         if (connection === 'close') {
-            const code = lastDisconnect.error?.output?.statusCode;
-            if (code !== DisconnectReason.loggedOut) {
+            const code = lastDisconnect?.error?.output?.statusCode;
+            const shouldReconnect = code !== DisconnectReason.loggedOut;
+
+            if (shouldReconnect) {
+                console.log(chalk.yellow(`[SUB-BOT] Reconectando: ${userNumber}...`));
                 setTimeout(() => startSubBot(jid, mainConn), 5000);
             } else {
-                console.log(chalk.red(`[SUB-BOT] 🗑️ Sesión cerrada por el usuario: ${userNumber}. Eliminando archivos...`));
+                console.log(chalk.red(`[SUB-BOT] Sesión eliminada: ${userNumber}`));
                 global.subBots.delete(jid);
-                if (fs.existsSync(userSessionPath)) {
-                    fs.rmSync(userSessionPath, { recursive: true, force: true });
-                }
+                if (fs.existsSync(userSessionPath)) fs.rmSync(userSessionPath, { recursive: true, force: true });
             }
         } else if (connection === 'open') {
             console.log(chalk.green(`[SUB-BOT] ✅ Conectado: ${userNumber}`));
@@ -65,29 +67,19 @@ export const startSubBot = async (userId, mainConn = null) => {
 
     sock.ev.on('messages.upsert', async (chatUpdate) => {
         let m = chatUpdate.messages[0];
-        if (!m.message) return;
-
-        const body = (m.message.conversation || m.message.extendedTextMessage?.text || m.message.imageMessage?.caption || "").trim();
-        const prefixes = config.allPrefixes || ['#', '!', '.'];
-
-        const hasPrefix = prefixes.some(p => body.startsWith(p));
-        const isNoPrefixCmd = Array.from(global.commands.values()).some(cmd => 
-            cmd.noPrefix && (body.toLowerCase() === cmd.name.toLowerCase() || (cmd.alias && cmd.alias.includes(body.toLowerCase())))
-        );
-
-        if (m.key.fromMe && !hasPrefix && !isNoPrefixCmd) return;
-
+        if (!m || !m.message) return;
+        
         m.chat = m.key.remoteJid;
         m.sender = m.key.participant || m.key.remoteJid;
-
-        if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = { rolls: {} };
+        
+        if (m.key.fromMe) return;
 
         m.reply = (text) => sock.sendMessage(m.chat, { text }, { quoted: m });
 
         m.download = () => {
             const msg = m.message.imageMessage || m.message.videoMessage || m.message.stickerMessage || m.message.audioMessage || m.message.documentMessage;
             if (!msg) return null;
-            return downloadContentFromMessage(msg, m.message.imageMessage ? 'image' : m.message.videoMessage ? 'video' : m.message.stickerMessage ? 'sticker' : m.message.audioMessage ? 'audio' : 'document');
+            return downloadContentFromMessage(msg, Object.keys(m.message)[0].replace('Message', ''));
         };
 
         const msgType = Object.keys(m.message)[0];
@@ -123,14 +115,13 @@ export const startSubBot = async (userId, mainConn = null) => {
 };
 
 export const loadAllSubBots = async (mainConn) => {
-    try {
-        if (!fs.existsSync(sessionsPath)) return;
-        const sessions = fs.readdirSync(sessionsPath);
-        for (const num of sessions) {
-            if (num.includes('.')) continue; 
-            const jid = `${num}@s.whatsapp.net`;
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            startSubBot(jid, mainConn);
-        }
-    } catch (err) {}
+    if (!fs.existsSync(sessionsPath)) return;
+    const sessions = fs.readdirSync(sessionsPath);
+    console.log(chalk.blue(`[SISTEMA] Reanudando ${sessions.length} sub-bots...`));
+    for (const num of sessions) {
+        if (num.includes('.') || isNaN(num)) continue; 
+        const jid = `${num}@s.whatsapp.net`;
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        startSubBot(jid, mainConn);
+    }
 };
