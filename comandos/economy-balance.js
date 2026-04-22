@@ -15,7 +15,20 @@ const balanceCommand = {
 
     run: async (conn, m) => {
         try {
-            const user = (m.quoted ? m.quoted.sender : m.mentionedJid?.[0] || m.sender).split('@')[0];
+            let targetJid = m.sender;
+
+            if (m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]) {
+                targetJid = m.message.extendedTextMessage.contextInfo.mentionedJid[0];
+            } else if (m.quoted) {
+                targetJid = m.quoted.key.participant || m.quoted.key.remoteJid;
+            }
+
+            const user = targetJid.split('@')[0].split(':')[0];
+
+            if (!fs.existsSync(dbPath)) {
+                return m.reply(`*${config.visuals.emoji2}* Error: Base de datos no encontrada.`);
+            }
+
             let db = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
 
             if (!db[user]) {
@@ -23,9 +36,9 @@ const balanceCommand = {
             }
 
             const userData = db[user];
-            const total = userData.wallet + userData.bank;
+            const total = (userData.wallet || 0) + (userData.bank || 0);
 
-            const texto = `*${config.visuals.emoji3}* \`ESTADO FINANCIERO\` *${config.visuals.emoji3}*\n\n*${config.visuals.emoji} Cartera:* ¥${userData.wallet.toLocaleString()}\n*${config.visuals.emoji4} Banco:* ¥${userData.bank.toLocaleString()}\n*${config.visuals.emoji2} Total:* ¥${total.toLocaleString()}\n\n> *Usuario:* @${user}`;
+            const texto = `*${config.visuals.emoji3}* \`ESTADO FINANCIERO\` *${config.visuals.emoji3}*\n\n*${config.visuals.emoji} Cartera:* ¥${(userData.wallet || 0).toLocaleString()}\n*${config.visuals.emoji4} Banco:* ¥${(userData.bank || 0).toLocaleString()}\n*${config.visuals.emoji2} Total:* ¥${total.toLocaleString()}\n\n> *Usuario:* @${user}`;
 
             await conn.sendMessage(m.chat, { 
                 text: texto, 
@@ -33,7 +46,8 @@ const balanceCommand = {
             }, { quoted: m });
 
         } catch (e) {
-            m.reply(`*${config.visuals.emoji2}* Error al consultar.`);
+            console.error(e);
+            m.reply(`*${config.visuals.emoji2}* Error al consultar el balance.`);
         }
     }
 };
