@@ -25,7 +25,7 @@ const baltopCommand = {
                     wallet: Number(db[id].wallet) || 0,
                     bank: Number(db[id].bank) || 0
                 }))
-                .filter(user => user.total > 0) // <--- FILTRO: Solo usuarios con dinero
+                .filter(user => user.total > 0) 
                 .sort((a, b) => b.total - a.total);
 
             const pageSize = 10;
