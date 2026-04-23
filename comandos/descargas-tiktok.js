@@ -1,7 +1,3 @@
-/* KAZUMA MISTER BOT - TIKTOK SMART DOWNLOADER
-   Ruta: comandos/descargas-tiktok.js
-   Desarrollado por Félix OFC
-*/
 import fetch from 'node-fetch';
 
 const tiktokCommand = {
@@ -23,13 +19,11 @@ const tiktokCommand = {
             let videoData;
 
             if (isUrl) {
-                // DESCARGA DIRECTA POR LINK
                 const res = await fetch(`https://nex-magical.vercel.app/download/tiktok?url=${encodeURIComponent(text)}&apikey=${apiKey}`);
                 const json = await res.json();
                 if (!json.status) throw new Error('Link inválido');
                 videoData = json.result.data;
             } else {
-                // BÚSQUEDA POR TEXTO
                 const res = await fetch(`https://nex-magical.vercel.app/search/tiktok?q=${encodeURIComponent(text)}&apikey=${apiKey}`);
                 const json = await res.json();
                 if (!json.status || !json.result.length) return m.reply('*❁* `Sin resultados` *❁*');
@@ -44,7 +38,6 @@ const tiktokCommand = {
 
             await conn.sendMessage(m.key.remoteJid, { image: { url: videoData.cover || videoData.origin_cover }, caption: infoText }, { quoted: m });
 
-            // Selección de URL MP4 (Prioridad HD)
             const finalVideo = videoData.hdplay || videoData.play;
 
             await conn.sendMessage(m.key.remoteJid, { 
