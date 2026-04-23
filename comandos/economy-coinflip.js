@@ -35,7 +35,7 @@ const flipCommand = {
 
             const bet = 1000;
             const luck = Math.random(); 
-            const win = luck < 0.3; // 30% de probabilidad de ganar
+            const win = luck < 0.3; 
             const result = win ? choice : (choice === 'cara' ? 'cruz' : 'cara');
 
             if (win) {
