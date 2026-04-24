@@ -14,7 +14,7 @@ const demoteCommand = {
             const isBotAdmin = groupMetadata.participants.find(p => p.id === botNumber)?.admin;
 
             if (!isBotAdmin) {
-                return m.reply(`*${config.visuals.emoji2}* El bot no posee rango de Administrador. No puedo revocar privilegios a otros miembros.\n\n> ¡Solicita el rango para gestionar la jerarquía!`);
+                return m.reply(`*${config.visuals.emoji2}* El bot no posee rango de Administrador. No puedo revocar privilegios.\n\n> ¡Solicita el rango para gestionar la jerarquía!`);
             }
 
             let targetJid;
@@ -30,12 +30,22 @@ const demoteCommand = {
 
             const userToDemote = targetJid.split('@')[0].split(':')[0] + '@s.whatsapp.net';
             const ownerNumber = config.owner[0][0] + '@s.whatsapp.net';
-            const participants = groupMetadata.participants;
-            const targetData = participants.find(p => p.id === userToDemote);
+            const groupCreator = groupMetadata.owner || m.chat.split('-')[0] + '@s.whatsapp.net';
+
+            if (userToDemote === botNumber) {
+                return m.reply(`*${config.visuals.emoji2}* No puedo degradarme a mí mismo. Mi propósito es servir, no autodestruirme.\n\n> ¡Acción cancelada por protocolo de seguridad!`);
+            }
 
             if (userToDemote === ownerNumber) {
-                return m.reply(`*${config.visuals.emoji2}* No puedes degradar al Creador del bot. La jerarquía suprema es inmutable.\n\n> ¡Intento de rebelión fallido!`);
+                return m.reply(`*${config.visuals.emoji2}* El Creador del bot posee una jerarquía absoluta. No puedes quitarle sus privilegios.\n\n> ¡Intento de rebelión detectado y bloqueado!`);
             }
+
+            if (userToDemote === groupCreator) {
+                return m.reply(`*${config.visuals.emoji2}* No se puede degradar al dueño original del grupo. Su autoridad es raíz.\n\n> ¡No tengo permiso para tocar al Fundador!`);
+            }
+
+            const participants = groupMetadata.participants;
+            const targetData = participants.find(p => p.id === userToDemote);
 
             if (!targetData?.admin) {
                 return m.reply(`*${config.visuals.emoji2}* El usuario seleccionado no es Administrador.\n\n> ¡No hay privilegios que revocar!`);
