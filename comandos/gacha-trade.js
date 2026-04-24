@@ -19,7 +19,7 @@ const tradeCommand = {
                 if (!m.quoted) return m.reply(`*${config.visuals.emoji2}* Responde al mensaje de la propuesta para aceptar.`);
                 
                 const proposal = trades.get(m.quoted.id);
-                if (!proposal) return m.reply(`*${config.visuals.emoji2}* Esta propuesta ya no existe, ha caducado o fue rechazada.`);
+                if (!proposal) return m.reply(`*${config.visuals.emoji2}* Esta propuesta ya no existe o ha caducado.`);
                 if (m.sender !== proposal.toJid) return m.reply(`*${config.visuals.emoji2}* Solo la persona mencionada puede aceptar este intercambio.`);
 
                 let gachaDB = JSON.parse(fs.readFileSync(gachaPath, 'utf-8'));
@@ -62,7 +62,7 @@ const tradeCommand = {
             if (gachaDB[hisId].owner !== target) return m.reply(`*${config.visuals.emoji2}* El personaje *${gachaDB[hisId].name}* no es de esa persona.`);
 
             const sent = await conn.sendMessage(m.chat, { 
-                text: `*${config.visuals.emoji3} \`PROPUESTA DE INTERCAMBIO\` ${config.visuals.emoji3}*\n\n@${user} quiere cambiar su *${gachaDB[myId].name}* por tu *${gachaDB[hisId].name}*.\n\n> Tienes *2 segundos* para responder con: *#trade accept*`,
+                text: `*${config.visuals.emoji3} \`PROPUESTA DE INTERCAMBIO\` ${config.visuals.emoji3}*\n\n@${user} quiere cambiar su *${gachaDB[myId].name}* por tu *${gachaDB[hisId].name}*.\n\n> Tienes *5 minutos* para responder con: *#trade accept*`,
                 mentions: [m.sender, targetJid]
             }, { quoted: m });
 
@@ -73,13 +73,13 @@ const tradeCommand = {
                 if (trades.has(proposalId)) {
                     trades.delete(proposalId);
                     await conn.sendMessage(m.chat, { 
-                        text: `*${config.visuals.emoji2}* El tiempo para el intercambio ha expirado. La propuesta ha sido cancelada.` 
+                        text: `*${config.visuals.emoji2}* El tiempo para el intercambio ha expirado. La propuesta de @${user} ha sido cancelada.`,
+                        mentions: [user + '@s.whatsapp.net']
                     }, { quoted: sent });
                 }
-            }, 2000);
+            }, 300000);
 
         } catch (e) {
-            console.error(e);
             m.reply(`*${config.visuals.emoji2}* Error en el intercambio.`);
         }
     }
