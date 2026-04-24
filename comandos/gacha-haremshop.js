@@ -39,7 +39,7 @@ const haremShop = {
                 txt += `  ᗒ *Precio:* ¥${item.salePrice.toLocaleString()}\n\n`;
             });
 
-            txt += `\n> Para comprar usa: #buy (ID)`;
+            txt += `> Para comprar usa: #buy (ID)`;
 
             await conn.sendMessage(m.chat, { 
                 text: txt, 
