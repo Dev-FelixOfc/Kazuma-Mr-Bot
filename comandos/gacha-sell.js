@@ -18,18 +18,18 @@ const sellCommand = {
             const price = parseInt(args[1]);
 
             if (!pjId || isNaN(price)) {
-                return m.reply(`*${config.visuals.emoji2}* \`Uso Incorrecto\`\n\n> #sell (ID) (Precio)`);
+                return m.reply(`*${config.visuals.emoji2}* \`Uso Incorrecto\`\n• Usa el comando de la siguiente manera:\n> #sell (ID) (Precio)`);
             }
 
             let gachaDB = JSON.parse(fs.readFileSync(gachaPath, 'utf-8'));
-            if (!gachaDB[pjId]) return m.reply(`*${config.visuals.emoji2}* El personaje con ID \`${pjId}\` no existe.`);
+            if (!gachaDB[pjId]) return m.reply(`*${config.visuals.emoji2}* El personaje con ID \`${pjId}\` no existe. Revisa bien los datos antes de ingresar un id.`);
             
             const pj = gachaDB[pjId];
             if (pj.owner !== user) return m.reply(`*${config.visuals.emoji2}* ¡Este personaje no te pertenece!`);
 
             const minPrice = pj.value + 1000;
             if (price < minPrice) {
-                return m.reply(`*${config.visuals.emoji2}* El precio mínimo de venta es **¥${minPrice.toLocaleString()}**.`);
+                return m.reply(`*${config.visuals.emoji2}* El precio mínimo de venta es *¥${minPrice.toLocaleString()}*.`);
             }
 
             if (!fs.existsSync(shopPath)) fs.writeFileSync(shopPath, JSON.stringify({}));
@@ -49,7 +49,7 @@ const sellCommand = {
             fs.writeFileSync(shopPath, JSON.stringify(shopDB, null, 2));
             fs.writeFileSync(gachaPath, JSON.stringify(gachaDB, null, 2));
 
-            m.reply(`*${config.visuals.emoji3}* Has puesto a *${pj.name}* en el mercado por **¥${price.toLocaleString()}**.`);
+            m.reply(`*${config.visuals.emoji3}* Has puesto a *${pj.name}* en el mercado por *¥${price.toLocaleString()}*.`);
 
         } catch (e) {
             m.reply(`*${config.visuals.emoji2}* Error al poner en venta.`);
