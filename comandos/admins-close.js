@@ -5,7 +5,6 @@ const closeGroup = {
     alias: ['cerrargroup', 'cerrardatos', 'cerrar'],
     category: 'admins',
     isAdmin: true,
-    isBotAdmin: true,
     noPrefix: true,
 
     run: async (conn, m) => {
