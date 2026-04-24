@@ -39,7 +39,7 @@ const haremShop = {
                 txt += `  ᗒ *Precio:* ¥${item.salePrice.toLocaleString()}\n\n`;
             });
 
-            txt += `> Para comprar usa: #buy (ID)`;
+            txt += `> ¡Para comprar personajes, usa el comando  #buy (ID)!`;
 
             await conn.sendMessage(m.chat, { 
                 text: txt, 
