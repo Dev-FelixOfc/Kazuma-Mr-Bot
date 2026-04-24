@@ -5,34 +5,42 @@ const hidetagCommand = {
     alias: ['tag', 'mencionar'],
     category: 'admins',
     isOwner: false,
-    noPrefix: false, 
+    noPrefix: true,
     isAdmin: true,
     isGroup: true,
 
-    run: async (conn, m, { text, participants }) => {
+    run: async (conn, m, { text }) => {
         try {
-            // Captura de contenido: prioridad texto del comando > texto de mensaje citado
-            let content = text;
-            if (!content && m.quoted) {
-                content = m.quoted.text || m.quoted.caption || '';
+            // Obtener el texto directamente del cuerpo del mensaje si 'text' llega vacío
+            // Esto soluciona el problema de detección cuando noPrefix está activo
+            let mensaje = text;
+            
+            if (!mensaje && m.body) {
+                // Eliminamos el comando del inicio del texto para obtener solo el mensaje
+                const commandUsed = m.body.split(' ')[0];
+                mensaje = m.body.slice(commandUsed.length).trim();
             }
 
-            if (!content && !m.quoted) {
+            // Si aún no hay mensaje, intentamos sacar el texto de un mensaje citado
+            if (!mensaje && m.quoted) {
+                mensaje = m.quoted.text || m.quoted.caption || '';
+            }
+
+            if (!mensaje && !m.quoted) {
                 return m.reply(`*${config.visuals.emoji2}* Por favor, ingresa un mensaje o responde a uno para hacer el hidetag.`);
             }
 
+            const participants = await conn.groupMetadata(m.chat).then(v => v.participants);
             const users = participants.map(u => u.id);
 
-            // Si se cita un mensaje multimedia o con formato
             if (m.quoted) {
                 await conn.sendMessage(m.chat, { 
                     forward: m.quoted.fakeObj, 
                     mentions: users 
                 });
             } else {
-                // Si es solo texto directo
                 await conn.sendMessage(m.chat, { 
-                    text: content, 
+                    text: mensaje, 
                     mentions: users 
                 }, { quoted: m });
             }
