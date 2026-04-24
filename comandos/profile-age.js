@@ -19,22 +19,24 @@ const ageSystem = {
             let db = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
 
             if (cmd.includes('delage') || cmd.includes('borraredad')) {
-                if (!db[user]) return m.reply(`*${config.visuals.emoji2} \`DATO INEXISTENTE\` ${config.visuals.emoji2}*\n\nNo hay una edad registrada en tu perfil.\n\n> ¡La edad es solo un número, pero aquí no está!`);
+                if (!db[user]) return m.reply(`*${config.visuals.emoji2} \`DATO INEXISTENTE\` ${config.visuals.emoji2}*\n\nNo hay edad registrada.\n\n> ¡La edad es solo un número!`);
                 delete db[user];
                 fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
-                return m.reply(`*${config.visuals.emoji3} \`EDAD PURGADA\` ${config.visuals.emoji3}*\n\nTu edad ha sido eliminada del registro.\n\n> ¡Vuelve a ser joven eternamente!`);
+                return m.reply(`*${config.visuals.emoji3} \`EDAD PURGADA\` ${config.visuals.emoji3}*\n\nEdad eliminada del registro.\n\n> ¡Vuelve a ser joven eternamente!`);
             }
 
-            const age = parseInt(args[0]);
-            if (isNaN(age)) return m.reply(`*${config.visuals.emoji2} \`VALOR INVÁLIDO\` ${config.visuals.emoji2}*\n\nDebes ingresar un número válido.\n\n> Ejemplo: #setage 22`);
+            if (!args[0]) return m.reply(`*${config.visuals.emoji2} \`FALTAN DATOS\` ${config.visuals.emoji2}*\n\nDebes ingresar un número.\n\n> Ejemplo: #setage 22`);
 
-            if (age < 8 || age > 85) return m.reply(`*${config.visuals.emoji2} \`RANGO EXCEDIDO\` ${config.visuals.emoji2}*\n\nSolo se permite un rango de 8 a 85 años.\n\n> ¡El servidor Kazuma mantiene un estándar biológico!`);
+            const age = parseInt(args[0]);
+            if (isNaN(age)) return m.reply(`*${config.visuals.emoji2} \`VALOR INVÁLIDO\` ${config.visuals.emoji2}*\n\nIngresa números válidos.`);
+
+            if (age < 8 || age > 85) return m.reply(`*${config.visuals.emoji2} \`RANGO EXCEDIDO\` ${config.visuals.emoji2}*\n\nSolo de 8 a 85 años.\n\n> ¡Estándar biológico Kazuma!`);
 
             const estimatedYear = 2026 - age;
             db[user] = { birth: `01/01/${estimatedYear}`, age: age };
             fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
 
-            m.reply(`*${config.visuals.emoji3} \`EDAD REGISTRADA\` ${config.visuals.emoji3}*\n\nHas fijado tu edad en: *${age} años*\n\n> ¡Tu perfil ha sido actualizado con éxito!`);
+            m.reply(`*${config.visuals.emoji3} \`EDAD REGISTRADA\` ${config.visuals.emoji3}*\n\nEdad: *${age} años*\n\n> ¡Tu perfil ha sido actualizado!`);
 
         } catch (e) {
             m.reply('✘ Error al procesar la edad.');
