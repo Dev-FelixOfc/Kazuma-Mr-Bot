@@ -6,6 +6,7 @@ const genrePath = path.resolve('./config/database/profile/genres.json');
 const marryPath = path.resolve('./config/database/profile/casados.json');
 const ecoPath = path.resolve('./config/database/economy/economy.json');
 const gachaPath = path.resolve('./config/database/gacha/gacha_list.json');
+const birthPath = path.resolve('./config/database/profile/birthdays.json');
 
 const profileCommand = {
     name: 'profile',
@@ -29,9 +30,13 @@ const profileCommand = {
             const casados = fs.existsSync(marryPath) ? JSON.parse(fs.readFileSync(marryPath, 'utf-8')) : {};
             const ecoDB = fs.existsSync(ecoPath) ? JSON.parse(fs.readFileSync(ecoPath, 'utf-8')) : {};
             const gachaDB = fs.existsSync(gachaPath) ? JSON.parse(fs.readFileSync(gachaPath, 'utf-8')) : {};
+            const birthDB = fs.existsSync(birthPath) ? JSON.parse(fs.readFileSync(birthPath, 'utf-8')) : {};
 
             const genero = genres[user] || 'No definido';
             const pareja = casados[user] ? `@${casados[user]}` : 'Soltero/a';
+            const edad = birthDB[user]?.age || 'No definida';
+            const cumple = birthDB[user]?.birth || 'No definido';
+
             if (casados[user]) mentions.push(casados[user] + '@s.whatsapp.net');
 
             const wallet = Number(ecoDB[user]?.wallet) || 0;
@@ -48,6 +53,8 @@ const profileCommand = {
             let txt = `*${config.visuals.emoji3} \`PERFIL DE USUARIO\` ${config.visuals.emoji3}*\n\n`;
             txt += `*✿︎ Usuario:* @${user}\n\n`;
             txt += `*✿︎ Género:* ${genero}\n`;
+            txt += `*✿︎ Edad:* ${edad}\n`;
+            txt += `*✿︎ Cumpleaños:* ${cumple}\n`;
             txt += `*✿︎ Pareja:* ${pareja}\n\n`;
             txt += `*✿︎ INFO ECONOMY* ✿︎\n`;
             txt += `> ⴵ Personajes: *${totalPjs}*\n`;
