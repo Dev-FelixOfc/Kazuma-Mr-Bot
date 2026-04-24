@@ -41,6 +41,7 @@ const menuCommand = {
 *✿︎ ${prefix}infobot • ${prefix}status*
 > ❀ Mirar información detallada del bot.
 
+
 *» (❍ᴥ❍ʋ) \`ECONOMY\` «*
 > ꕥ Comandos de economía para ganar dinero y competir por ser el más rico en el bot.
 
@@ -63,6 +64,7 @@ const menuCommand = {
 *✿︎ ${prefix}economy • ${prefix}economía*
 > ❀ Consulta tus balances y tiempos de espera.
 
+
 *» (❍ᴥ❍ʋ) \`SOCKETS\` «*
 > ꕥ Comandos de los subbots.
 
@@ -73,6 +75,7 @@ const menuCommand = {
 *✿︎ ${prefix}delsession*
 > ❀ Elimina tu sesión de subbot.
 ‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎
+
 *» (❍ᴥ❍ʋ) \`GACHA\` «*
 > ꕥ Comandos para colecciona personajes y competir en el mercado global.
 
@@ -95,6 +98,7 @@ const menuCommand = {
 *✿︎ ${prefix}vote • ${prefix}despedir*
 > ❀ Libera a un personaje de tu propiedad.
 
+
 *» (❍ᴥ❍ʋ) \`GESTIÓN\` «*
 > ꕥ Comandos de grupo.
 
@@ -103,6 +107,7 @@ const menuCommand = {
 *✿︎ ${prefix}antilink on/off*
 > ❀ Protector de enlaces.
 
+
 *» (❍ᴥ❍ʋ) \`ADMINS\` «*
 > ꕥ Comandos para admins del grupo.
 
@@ -110,6 +115,7 @@ const menuCommand = {
 > ❀ Establece a un socket como principal del grupo.
 *✿︎ ${prefix}delprimary*
 > ❀ Haz que todos los sockets vuelvan a responder en el grupo.
+
 
 *» (❍ᴥ❍ʋ) \`DESCARGAS\` «*
 > ꕥ Descarga cosas en diferentes redes.
@@ -121,11 +127,13 @@ const menuCommand = {
 *✿︎ ${prefix}playdoc*
 > ❀ Descarga videos de YouTube en formato de documento.
 
+
 *» (❍ᴥ❍ʋ) \`TOOLS\` «*
 > ꕥ Herramientas útiles.
 
 *✿︎ ${prefix}tourl • ${prefix}subir*
 > ❀ Convierte una imagen o sticker en un enlace de Yotsuba Cloud.
+
 
 *» (❍ᴥ❍ʋ) \`OWNER\` «*
 > ꕥ Comandos del creador.
