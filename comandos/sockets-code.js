@@ -1,4 +1,4 @@
-/* 🚫 PROHIBIDOS EDITAR CREDITOS 🚫
+/* 🚫 PROHIBIDO EDITAR CREDITOS 🚫
 ⚠️ Aviso » Este codigo fue creado únicamente por Dev-FelixOfc, cualquier edit del código es aceptado, pero los créditos deben permanecer (la empatía va primero)
 -> Cualquier modificación de este código y de los códigos asociados para que esté funcione fueron creados por mi, no se toleran sapos, mentirosos que editen simplemente el código y digan que fue creado por ellos, ni personas que se pongan ah andar por hay diciendo que esto fue creado por el cuando en realidad no tuvo nada que ver con el desarrollo de esto. 
 El código fue desarrollado para el bot Kazuma, en el mes de abril, cualquier otro bot que tenga este código con otros créditos, otra fecha más atrás que está o cualquier otra cosa se tolera como ladrón, porque la única política asignada al código es que no se le pueden cambiar los créditos a su dueño.
