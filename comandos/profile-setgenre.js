@@ -40,7 +40,7 @@ const setGenreCommand = {
                     delete casados[pareja];
                     fs.writeFileSync(marryPath, JSON.stringify(casados, null, 2));
 
-                    const aviso = `*⚠️ DIVORCIO AUTOMÁTICO ⚠️*\n\nSe han detectado géneros iguales en el matrimonio. El matrimonio ha sido anulado.`;
+                    const aviso = `*⚠︎ DIVORCIO AUTOMÁTICO ⚠︎*\n\nSe han detectado géneros iguales en el matrimonio. El matrimonio ha sido anulado.`;
                     
                     await conn.sendMessage(m.sender, { text: aviso });
                     await conn.sendMessage(pareja + '@s.whatsapp.net', { text: aviso });
