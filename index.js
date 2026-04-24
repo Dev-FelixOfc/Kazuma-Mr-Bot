@@ -145,11 +145,15 @@ async function startBot() {
             }
 
             if (txt) {
-                await conn.sendMessage(id, {
-                    image: { url: config.img1 },
-                    caption: txt,
-                    mentions: [user]
-                });
+                try {
+                    await conn.sendMessage(id, {
+                        image: { url: config.img1 },
+                        caption: txt,
+                        mentions: [user]
+                    });
+                } catch (e) {
+                    await conn.sendMessage(id, { text: txt, mentions: [user] });
+                }
             }
         }
     });
