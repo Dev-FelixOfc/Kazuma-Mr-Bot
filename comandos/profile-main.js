@@ -15,8 +15,11 @@ const profileCommand = {
             const targetJid = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0] || (m.quoted ? m.quoted.sender : m.sender);
             const user = targetJid.split('@')[0].split(':')[0];
             
-            let db = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
-            const data = db[user] || {};
+            let data = {};
+            if (fs.existsSync(dbPath)) {
+                let db = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+                data = db[user] || {};
+            }
 
             let pp;
             try { pp = await conn.profilePictureUrl(targetJid, 'image'); } catch { pp = 'https://i.ibb.co/mJR6NBs/avatar.png'; }
@@ -37,7 +40,8 @@ const profileCommand = {
             }, { quoted: m });
 
         } catch (e) {
-            m.reply(`*${config.visuals.emoji2}* Error al cargar el perfil.`);
+            console.error(e);
+            m.reply(`*${config.visuals.emoji2}* Error al mostrar el perfil.`);
         }
     }
 };
