@@ -1,5 +1,3 @@
-Este es mi index, añade lo que dijiste, pásalo completo, sin comentarios; y sobre todo, solo mueve lo que tengas que mover, porque cualquier error en este archivo daña el bot entero 
-
 import { 
     makeWASocket, 
     useMultiFileAuthState, 
