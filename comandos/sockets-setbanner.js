@@ -62,10 +62,6 @@ const setBanner = {
 
             await conn.sendMessage(from, { text: successMsg }, { quoted: m });
 
-            if (from !== m.sender) {
-                await conn.sendMessage(m.sender, { text: successMsg });
-            }
-
         } catch (e) {
             console.error(e);
             await conn.sendMessage(m.chat, { text: `*${config.visuals.emoji2}* Error al procesar el banner.` }, { quoted: m });
