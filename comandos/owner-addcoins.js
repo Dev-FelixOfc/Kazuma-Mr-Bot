@@ -29,7 +29,7 @@ const addCoins = {
             const monto = parseInt(args.find(arg => !isNaN(arg)));
 
             if (!monto || monto <= 0) {
-                return m.reply(`*${config.visuals.emoji2}* \`Monto Inválido\`\n\nIngresa una cantidad válida.`);
+                return m.reply(`*${config.visuals.emoji2}* \`Monto Inválido\`\n\nIngresa una cantidad válida para enviar los coins.`);
             }
 
             if (!fs.existsSync(economyPath)) {
