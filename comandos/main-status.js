@@ -1,4 +1,6 @@
 import os from 'os';
+import fs from 'fs-extra';
+import path from 'path';
 import { config } from '../config.js';
 
 const statusCommand = {
@@ -21,14 +23,26 @@ const statusCommand = {
 
             const totalRam = (os.totalmem() / (1024 * 1024 * 1024)).toFixed(1);
             const usedRam = ((os.totalmem() - os.freemem()) / (1024 * 1024 * 1024)).toFixed(1);
-            
+
             const cpus = os.cpus();
             const cpuModel = cpus[0].model.replace(/CPU|@|inc.|Processor|Core\(TM\)|i[0-9]-/g, '').trim();
             const cpuCores = cpus.length; 
 
+            const botNumber = conn.user.id.split(':')[0];
+            const settingsPath = path.resolve(`./sesiones_subbots/${botNumber}/settings.json`);
+            
+            let displayBotName = config.botName;
+
+            if (fs.existsSync(settingsPath)) {
+                const localData = await fs.readJson(settingsPath);
+                if (localData.shortName) {
+                    displayBotName = localData.shortName;
+                }
+            }
+
             const textoStatus = `*${config.visuals.emoji3}* \`SISTEMA KAZUMA\` *${config.visuals.emoji3}*
 
-✿︎ Bot ᗒ *${config.botName}*
+✿︎ Bot ᗒ *${displayBotName}*
 ❁ Uptime ᗒ *${uptimeDisplay}*
 ❀ Comandos ᗒ *${global.totalCommandsUsed || 0}*
 
