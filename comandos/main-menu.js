@@ -18,13 +18,17 @@ const menuCommand = {
 
             const botNumber = conn.user.id.split(':')[0];
             const settingsPath = path.resolve(`./sesiones_subbots/${botNumber}/settings.json`);
-            
+
             let displayLongName = config.botName;
+            let displayBanner = config.visuals.img1;
 
             if (fs.existsSync(settingsPath)) {
                 const localData = await fs.readJson(settingsPath);
                 if (localData.longName) {
                     displayLongName = localData.longName;
+                }
+                if (localData.banner) {
+                    displayBanner = localData.banner;
                 }
             }
 
@@ -58,7 +62,7 @@ const menuCommand = {
             textoMenu = textoMenu.replace(/\${prefix}/g, prefix);
 
             await conn.sendMessage(m.chat, { 
-                image: { url: config.visuals.img1 }, 
+                image: { url: displayBanner }, 
                 caption: textoMenu
             }, { quoted: m });
 
