@@ -8,7 +8,7 @@ const shopPath = path.resolve('./config/database/gacha/gacha_shop.json');
 
 const buyCommand = {
     name: 'buy',
-    alias: ['comprar'],
+    alias: ['obtener'],
     category: 'gacha',
     noPrefix: true,
 
