@@ -12,63 +12,41 @@ const setBanner = {
     run: async (conn, m) => {
         try {
             const from = m.chat;
-            const user = m.sender.split('@')[0].split(':')[0];
             const botNumber = conn.user.id.split(':')[0];
-            const isOwner = config.owner.includes(m.sender);
+            const isMainBot = conn.user.id.includes('session_bot');
+            const user = m.sender.split('@')[0].split(':')[0];
+            const isPrincipalOwner = config.owner.includes(m.sender);
 
-            if (botNumber !== user && !isOwner) {
-                return await conn.sendMessage(from, { 
-                    text: `*${config.visuals.emoji2}* Solo el dueño de este socket puede personalizar su banner.` 
-                }, { quoted: m });
-            }
-
-            const q = m.quoted ? m.quoted : m;
-            const mime = (q.msg || q).mimetype || q.mediaType || '';
-
-            if (!mime || !/image/.test(mime)) {
-                return await conn.sendMessage(from, { 
-                    text: `*${config.visuals.emoji2}* Responde a una imagen con el comando para establecer tu banner.` 
-                }, { quoted: m });
-            }
-
-            await conn.sendMessage(from, { text: `*${config.visuals.emoji3}* \`GUARDANDO CONFIGURACIÓN...\`` }, { quoted: m });
-
-            const media = await q.download();
-            if (!media) throw new Error('No se pudo descargar la imagen.');
-
-            const link = await uploadToYotsuba(media, mime);
-            const fullLink = `https://upload.yotsuba.giize.com${link}`;
-
-            const sessionsPath = path.resolve('./sesiones_subbots');
-            const userSettingsPath = path.join(sessionsPath, botNumber, 'settings.json');
-
-            if (!fs.existsSync(path.join(sessionsPath, botNumber))) {
-                return await conn.sendMessage(from, { text: `*${config.visuals.emoji2}* Carpeta de sesión no encontrada.` }, { quoted: m });
-            }
+            const sessionsPath = path.resolve(isMainBot ? './session_bot' : './sesiones_subbots');
+            const folderPath = isMainBot ? sessionsPath : path.join(sessionsPath, botNumber);
+            const userSettingsPath = path.join(folderPath, 'settings.json');
 
             let localConfig = {};
             if (fs.existsSync(userSettingsPath)) {
                 localConfig = await fs.readJson(userSettingsPath);
             }
 
-            localConfig.banner = fullLink;
-            localConfig.lastUpdate = Date.now();
+            const allowedUser = localConfig.owner || botNumber;
+            if (user !== allowedUser && !isPrincipalOwner) {
+                return await conn.sendMessage(from, { text: `*${config.visuals.emoji2}* Solo el owner asignado puede usar este comando.` }, { quoted: m });
+            }
 
+            const q = m.quoted ? m.quoted : m;
+            const mime = (q.msg || q).mimetype || q.mediaType || '';
+            if (!/image/.test(mime)) return m.reply(`*${config.visuals.emoji2}* Responde a una imagen.`);
+
+            const media = await q.download();
+            const link = await uploadToYotsuba(media, mime);
+            const fullLink = `https://upload.yotsuba.giize.com${link}`;
+
+            localConfig.banner = fullLink;
             await fs.writeJson(userSettingsPath, localConfig, { spaces: 2 });
 
             const socketName = localConfig.shortName || config.botName;
-
-            const successMsg = `*${config.visuals.emoji3} \`BANNER ACTUALIZADO\` ${config.visuals.emoji3}*\n\nSe ha cambiado el banner para el socket *${socketName}*.\n\n*🚀 Enlace:* ${fullLink}\n\n> ¡Ajuste aplicado correctamente!`;
-
-            await conn.sendMessage(from, { text: successMsg }, { quoted: m });
-
-            if (from !== m.sender) {
-                await conn.sendMessage(m.sender, { text: successMsg });
-            }
+            await conn.sendMessage(from, { text: `*${config.visuals.emoji3}* Banner actualizado para *${socketName}*.\n\n${fullLink}` }, { quoted: m });
 
         } catch (e) {
             console.error(e);
-            await conn.sendMessage(m.chat, { text: `*${config.visuals.emoji2}* Error al procesar el banner.` }, { quoted: m });
         }
     }
 };
