@@ -1,6 +1,7 @@
 import { config } from '../config.js';
 import fs from 'fs-extra';
 import path from 'path';
+import { checkRankUpdate } from './rpg-avisos.js';
 
 const rpgDbPath = path.resolve('./config/database/rpg/rpg.json');
 const economyDbPath = path.resolve('./config/database/economy/economy.json');
@@ -13,8 +14,6 @@ const mineCommand = {
 
     run: async (conn, m) => {
         try {
-            if (!m.isGroup) return m.reply(`*${config.visuals.emoji2}* Este comando solo puede ser usado en grupos.`);
-
             const group = m.chat;
             const user = m.sender.split('@')[0].split(':')[0];
             const cooldown = 5 * 60 * 1000; 
@@ -41,7 +40,8 @@ const mineCommand = {
             if (!rpgDb[group][user]) {
                 rpgDb[group][user] = { 
                     minerals: { diamantes: 0, rubies: 0, esmeraldas: 0, zafiros: 0, amatistas: 0, perlas: 0, oro: 0 }, 
-                    lastMine: 0 
+                    lastMine: 0,
+                    rank: 'Novato de las Cuevas'
                 };
             }
 
@@ -77,6 +77,8 @@ const mineCommand = {
                 ecoDb[user] = { wallet: 0, bank: 0, daily: { lastClaim: 0, streak: 0 }, crime: { lastUsed: 0 } };
             }
             ecoDb[user].wallet = (ecoDb[user].wallet || 0) + rewards.coins;
+
+            await checkRankUpdate(conn, m, user, group, rpgDb);
 
             await fs.writeJson(rpgDbPath, rpgDb, { spaces: 2 });
             await fs.writeJson(economyDbPath, ecoDb, { spaces: 2 });
