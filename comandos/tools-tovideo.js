@@ -18,14 +18,10 @@ const toGifCommand = {
             let q = m.quoted ? m.quoted : m;
             let mime = (q.msg || q).mimetype || '';
 
-            if (!/webp/.test(mime)) {
-                return m.reply(`*${config.visuals.emoji2}* Responde a un sticker animado.`);
-            }
+            if (!/webp/.test(mime)) return m.reply(`*${config.visuals.emoji2}* Responde a un sticker animado.`);
 
             let img = await q.download();
-            if (!img) return m.reply(`*${config.visuals.emoji2}* Error al descargar.`);
-
-            await m.reply(`*${config.visuals.emoji3}* Convirtiendo sticker animado...`);
+            if (!img) return;
 
             const filename = `${Date.now()}`;
             const tempWebp = join(tmpdir(), `${filename}.webp`);
@@ -33,34 +29,28 @@ const toGifCommand = {
 
             await writeFile(tempWebp, img);
 
-            // Comando optimizado para stickers animados con transparencia
-            // -vsync 0 evita errores de frames faltantes
-            // -vf "format=yuv420p" asegura que WhatsApp lo lea
-            const ffmpegCmd = `ffmpeg -v error -i ${tempWebp} -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p" -c:v libx264 -preset ultrafast -crf 20 -an -vsync 0 ${tempMp4}`;
-
             try {
-                await execPromise(ffmpegCmd);
+                await execPromise(`ffmpeg -i ${tempWebp} -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p" -c:v libx264 -preset ultrafast -crf 20 -an -vsync 0 ${tempMp4}`);
                 
                 const videoBuffer = await readFile(tempMp4);
 
                 await conn.sendMessage(m.chat, { 
                     video: videoBuffer, 
-                    caption: `*${config.visuals.emoji}* ¡Listo!`,
-                    gifPlayback: true 
+                    gifPlayback: true,
+                    caption: `*${config.visuals.emoji}*` 
                 }, { quoted: m });
 
             } catch (ffmpegErr) {
-                console.error('Error de FFmpeg:', ffmpegErr);
-                m.reply(`*${config.visuals.emoji2}* Error técnico: Asegúrate de tener **FFmpeg** instalado en tu servidor.`);
+                console.error(ffmpegErr);
+                m.reply(`*${config.visuals.emoji2}* Error de conversión. Verifica FFmpeg en el host.`);
             } finally {
-                // Borrar archivos siempre, incluso si falla
                 await unlink(tempWebp).catch(() => {});
                 await unlink(tempMp4).catch(() => {});
             }
 
         } catch (e) {
             console.error(e);
-            m.reply(`*${config.visuals.emoji2}* Error inesperado.`);
+            m.reply(`*${config.visuals.emoji2}* Error interno.`);
         }
     }
 };
