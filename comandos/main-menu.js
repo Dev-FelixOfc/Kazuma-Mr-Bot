@@ -37,7 +37,7 @@ const menuCommand = {
             } else if (menuCategories[input]) {
                 finalBody = menuCategories[input];
             } else {
-                return m.reply(`*${config.visuals.emoji2}* \`Categoría no encontrada\`\n\nLas categorías disponibles son:\n${Object.keys(menuCategories).map(c => `• ${c}`).join('\n')}`);
+                return m.reply(`*${config.visuals.emoji2}* \`Categoría no encontrada\`\n\n*Las categorías disponibles son* »\n${Object.keys(menuCategories).map(c => `> ➪ ${c}`).join('\n')}`);
             }
 
             let textoMenu = `${header}${subHeader}${infoBot}\n\n${finalBody}`;
