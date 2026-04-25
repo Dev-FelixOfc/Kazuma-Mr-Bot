@@ -10,7 +10,9 @@
         "perlas": 0,
         "oro": 0
       },
-      "lastMine": 0
+      "lastMine": 0,
+      "lastChest": 0,
+      "rank": "Novato de las Cuevas"
     }
   }
 }
