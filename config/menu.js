@@ -91,7 +91,17 @@ export const menuCategories = {
 *✿︎ \${prefix}setprimary • \${prefix}solotu*
 > ❀ Establece a un socket como principal del grupo.
 *✿︎ \${prefix}delprimary*
-> ❀ Haz que todos los sockets vuelvan a responder en el grupo.`,
+> ❀ Haz que todos los sockets vuelvan a responder en el grupo.
+*✿︎ \${prefix}promote (user)*
+> ❀ Haz admin a una persona del grupo.
+*✿︎ \${prefix}demote (user*
+> ❀ Quita de admin a una persona del grupo.
+*✿︎ \${prefix}kick • \${prefix}sacar (user)*
+> ❀ Expulsa a una persona del grupo.
+*✿︎ \${prefix}open • \${prefix}abrir*
+> ❀ Abre el grupo para que todos puedan enviar mensajes
+*✿︎ \${prefix}close • \${prefix}cerrar*
+> ❀ Cierra el grupo para que solo admins puedan enviar mensajes.`,
 
     descargas: `*» (❍ᴥ❍ʋ) \`DESCARGAS\` «*
 > ꕥ Descarga cosas en diferentes redes.
