@@ -13,22 +13,19 @@ const setBanner = {
         try {
             const from = m.chat;
             const botNumber = conn.user.id.split(':')[0];
-            const isMainBot = conn.user.id.includes('session_bot');
+            const isMainBot = conn.user.id.includes('session_bot') || !m.sender.includes(':');
             const user = m.sender.split('@')[0].split(':')[0];
             const isPrincipalOwner = config.owner.includes(m.sender);
 
-            const sessionsPath = path.resolve(isMainBot ? './session_bot' : './sesiones_subbots');
-            const folderPath = isMainBot ? sessionsPath : path.join(sessionsPath, botNumber);
+            const folderPath = isMainBot ? path.resolve('./session_bot') : path.resolve(`./sesiones_subbots/${botNumber}`);
             const userSettingsPath = path.join(folderPath, 'settings.json');
 
             let localConfig = {};
-            if (fs.existsSync(userSettingsPath)) {
-                localConfig = await fs.readJson(userSettingsPath);
-            }
+            if (fs.existsSync(userSettingsPath)) localConfig = await fs.readJson(userSettingsPath);
 
             const allowedUser = localConfig.owner || botNumber;
             if (user !== allowedUser && !isPrincipalOwner) {
-                return await conn.sendMessage(from, { text: `*${config.visuals.emoji2}* Solo el owner asignado puede usar este comando.` }, { quoted: m });
+                return await conn.sendMessage(from, { text: `*${config.visuals.emoji2}* Solo el owner puede usar esto.` }, { quoted: m });
             }
 
             const q = m.quoted ? m.quoted : m;
@@ -40,10 +37,11 @@ const setBanner = {
             const fullLink = `https://upload.yotsuba.giize.com${link}`;
 
             localConfig.banner = fullLink;
+            if (!fs.existsSync(folderPath)) fs.mkdirpSync(folderPath);
             await fs.writeJson(userSettingsPath, localConfig, { spaces: 2 });
 
-            const socketName = localConfig.shortName || config.botName;
-            await conn.sendMessage(from, { text: `*${config.visuals.emoji3}* Banner actualizado para *${socketName}*.\n\n${fullLink}` }, { quoted: m });
+            const name = localConfig.shortName || config.botName;
+            await conn.sendMessage(from, { text: `*${config.visuals.emoji3}* Banner actualizado para *${name}*.\n\n${fullLink}` }, { quoted: m });
 
         } catch (e) {
             console.error(e);
