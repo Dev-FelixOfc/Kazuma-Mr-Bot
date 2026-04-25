@@ -44,7 +44,9 @@ const profileCommand = {
 
             const wallet = Number(ecoDB[user]?.wallet) || 0;
             const bank = Number(ecoDB[user]?.bank) || 0;
-            const totalPjs = Object.values(gachaDB).filter(pj => pj.owner === user).length;
+
+            const userPjs = Object.values(gachaDB).filter(pj => pj.owner === user);
+            const totalPjs = userPjs.length;
 
             const userRpg = rpgDB[group]?.[user] || { minerals: {}, rank: 'Novato de las Cuevas' };
             const rank = userRpg.rank || 'Novato de las Cuevas';
@@ -65,10 +67,12 @@ const profileCommand = {
             txt += `*✿︎ Pareja:* ${pareja}\n\n`;
             
             txt += `*✿︎ INFO ECONOMY* ✿︎\n`;
-            txt += `> ⴵ Personajes: *${totalPjs}*\n`;
             txt += `> ⴵ Cartera: *¥${wallet.toLocaleString()}*\n`;
             txt += `> ⴵ Banco: *¥${bank.toLocaleString()}*\n`;
             txt += `> ⴵ Patrimonio: *¥${(wallet + bank).toLocaleString()}*\n\n`;
+
+            txt += `*✿︎ INFO GACHA* ✿︎\n`;
+            txt += `> ⴵ Colección: *${totalPjs} personajes*\n\n`;
 
             txt += `*✿︎ INFO RPG ✿︎*\n`;
             txt += `> ⴵ Rango: *${rank}*\n`;
