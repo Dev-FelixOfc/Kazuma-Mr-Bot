@@ -19,7 +19,7 @@ const stickerCommand = {
             }
 
             let img = await q.download();
-            if (!img) return m.reply(`*${config.visuals.emoji2}* Error al descargar el archivo.`);
+            if (!img) return m.reply(`*${config.visuals.emoji2}* Error al descargar.`);
 
             let userName = m.pushName || 'User';
             let botName = config.botName || 'Kazuma Bot';
@@ -43,7 +43,7 @@ const stickerCommand = {
 
         } catch (e) {
             console.error(e);
-            m.reply(`*${config.visuals.emoji2}* Error al procesar.`);
+            m.reply(`*${config.visuals.emoji2}* Error interno.`);
         }
     }
 };
