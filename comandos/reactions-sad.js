@@ -42,7 +42,7 @@ const sadCommand = {
             await conn.sendMessage(m.chat, { 
                 video: { url: videoRandom }, 
                 caption: texto,
-                gifPlayback: true,
+                mimetype: 'video/mp4',
                 mentions: mentions
             }, { quoted: m });
 
