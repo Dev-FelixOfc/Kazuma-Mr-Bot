@@ -17,7 +17,7 @@ const setMenu = {
 
             if (!fs.existsSync(sessionFolder)) {
                 return await conn.sendMessage(from, { 
-                    text: `*${config.visuals.emoji2} \`ACCESO DENEGADO\` ${config.visuals.emoji2}*\n\nEste comando solo puede ser ejecutado por los *Sockets* (Sub-Bots) autorizados dentro de su propia sesión.` 
+                    text: `*${config.visuals.emoji2} \`ACCESO DENEGADO\` ${config.visuals.emoji2}*\n\nEste comando solo puede ser ejecutado por los *Sockets* dentro de su propia sesión.` 
                 }, { quoted: m });
             }
 
