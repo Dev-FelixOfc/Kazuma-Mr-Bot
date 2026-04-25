@@ -12,10 +12,10 @@ const stickerCommand = {
     run: async (conn, m, args) => {
         try {
             let q = m.quoted ? m.quoted : m;
-            let mime = (q.msg || q).mimetype || '';
+            let mime = (q.msg || q).mimetype || q.mimetype || '';
 
             if (!/image|video|webp/.test(mime)) {
-                return m.reply(`*${config.visuals.emoji2}* \`Falta Multimedia\`\n\nResponde a una imagen o video.`);
+                return m.reply(`*${config.visuals.emoji2}* \`Falta Multimedia\`\n\nEnvía una imagen con el comando o responde a una.`);
             }
 
             let img = await q.download();
