@@ -6,7 +6,8 @@ import {
     DisconnectReason,
     Browsers,
     jidDecode,
-    downloadContentFromMessage
+    downloadContentFromMessage,
+    downloadMediaMessage
 } from '@whiskeysockets/baileys';
 import P from 'pino';
 import fs from 'fs';
@@ -144,10 +145,8 @@ async function startBot() {
         global.lastMessageMap.set(m.sender, Date.now());
         m.reply = (text) => conn.sendMessage(m.chat, { text }, { quoted: m });
 
-        m.download = () => {
-            const msg = m.message.imageMessage || m.message.videoMessage || m.message.stickerMessage || m.message.audioMessage || m.message.documentMessage;
-            if (!msg) return null;
-            return downloadContentFromMessage(msg, m.message.imageMessage ? 'image' : m.message.videoMessage ? 'video' : m.message.stickerMessage ? 'sticker' : m.message.audioMessage ? 'audio' : 'document');
+        m.download = async () => {
+            return await downloadMediaMessage(m, 'buffer', {}, { logger: P({ level: 'silent' }) });
         };
 
         const msgType = Object.keys(m.message)[0];
@@ -169,7 +168,10 @@ async function startBot() {
                     participant: contextInfo.participant
                 },
                 message: contextInfo.quotedMessage,
-                download: () => downloadContentFromMessage(q, type.replace('Message', ''))
+                download: async () => {
+                    const quotedMsg = { message: contextInfo.quotedMessage };
+                    return await downloadMediaMessage(quotedMsg, 'buffer', {}, { logger: P({ level: 'silent' }) });
+                }
             };
         } else {
             m.quoted = null;
