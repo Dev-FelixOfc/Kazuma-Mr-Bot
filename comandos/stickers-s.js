@@ -15,10 +15,12 @@ const stickerCommand = {
             let mime = (q.msg || q).mimetype || '';
 
             if (!/image|video|webp/.test(mime)) {
-                return m.reply(`*${config.visuals.emoji2}* \`Falta Multimedia\`\n\nResponde a una imagen, video o GIF para crear el sticker.`);
+                return m.reply(`*${config.visuals.emoji2}* \`Falta Multimedia\`\n\nResponde a una imagen o video.`);
             }
 
             let img = await q.download();
+            if (!img) return m.reply(`*${config.visuals.emoji2}* Error al descargar el archivo.`);
+
             let userName = m.pushName || 'User';
             let botName = config.botName || 'Kazuma Bot';
 
@@ -41,7 +43,7 @@ const stickerCommand = {
 
         } catch (e) {
             console.error(e);
-            m.reply(`*${config.visuals.emoji2}* Error al procesar el sticker.`);
+            m.reply(`*${config.visuals.emoji2}* Error al procesar.`);
         }
     }
 };
