@@ -51,13 +51,17 @@ const menuCommand = {
 ┃ upload.yotsuba.giize.com
 ┃ ✐ *Official channel* »
 ┃ https://whatsapp.com/channel/0029Vb6sgWdJkK73qeLU0J0N
-╰━━━━━━━━━━━━━━━━━━━╯`;
+╰━━━━━━━━━━━━━━━━━━━╯\n\n`;
 
             const infoUser = `┏━━━━✿︎ 𝐈𝐍𝐅𝐎-𝐔𝐒𝐄𝐑 ✿︎━━━━╮
-┃ ✐ *Nombre* » @${user}
-┃ ✐ *Rango* » ${rank}
-┃ ✐ *Coins* » ¥${wallet.toLocaleString()}
-┃ ✐ *Diamantes* » ${diamantes}
+┃ ✐ *Nombre* » 
+┃ @${user}
+┃ ✐ *Rango* » 
+┃ ${rank}
+┃ ✐ *Coins* » 
+┃ ¥${wallet.toLocaleString()}
+┃ ✐ *Diamantes* » 
+┃ ${diamantes}
 ╰━━━━━━━━━━━━━━━━━━━╯`;
 
             let header = `¡Hola! Soy ${displayLongName} (${botType}).\n\n`;
