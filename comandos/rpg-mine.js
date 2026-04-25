@@ -19,6 +19,17 @@ const mineCommand = {
             const user = m.sender.split('@')[0].split(':')[0];
             const cooldown = 5 * 60 * 1000; 
 
+            const botNumber = conn.user.id.split(':')[0];
+            const settingsPath = path.resolve(`./sesiones_subbots/${botNumber}/settings.json`);
+            let displayShortName = config.botName;
+
+            if (fs.existsSync(settingsPath)) {
+                const localData = await fs.readJson(settingsPath);
+                if (localData.shortName) {
+                    displayShortName = localData.shortName;
+                }
+            }
+
             if (!fs.existsSync(rpgDbPath)) fs.outputJsonSync(rpgDbPath, {});
             if (!fs.existsSync(economyDbPath)) fs.outputJsonSync(economyDbPath, {});
 
@@ -41,7 +52,7 @@ const mineCommand = {
                 const timeLeft = cooldown - timePassed;
                 const min = Math.floor(timeLeft / 60000);
                 const sec = Math.floor((timeLeft % 60000) / 1000);
-                return m.reply(`*${config.visuals.emoji2}* ¡Descansa! En este grupo podrás volver a minar en **${min}m ${sec}s**.`);
+                return m.reply(`*${config.visuals.emoji2}* ¡Descansa! Podrás volver a minar en **${min}m ${sec}s**.`);
             }
 
             const rewards = {
@@ -70,7 +81,7 @@ const mineCommand = {
             await fs.writeJson(rpgDbPath, rpgDb, { spaces: 2 });
             await fs.writeJson(economyDbPath, ecoDb, { spaces: 2 });
 
-            const textoExito = `*${config.visuals.emoji3}* \`MINERÍA KAZUMA\` *${config.visuals.emoji3}*
+            const textoExito = `*${config.visuals.emoji3}* \`MINERÍA ${displayShortName.toUpperCase()}\` *${config.visuals.emoji3}*
 
 Has excavado profundamente en las minas de este reino. Recursos obtenidos:
 
@@ -84,7 +95,7 @@ Has excavado profundamente en las minas de este reino. Recursos obtenidos:
 
 💰 *Extra:* ¥${rewards.coins.toLocaleString()} coins 
 
-> ¡sigue explorando las minas para obtener más recursos!`;
+> ¡Sigue explorando las minas para obtener más recursos!`;
 
             await conn.sendMessage(m.chat, { 
                 image: { url: 'https://upload.yotsuba.giize.com/u/T7JWpsWY.jpeg' }, 
