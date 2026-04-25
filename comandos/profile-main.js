@@ -10,7 +10,7 @@ const birthPath = path.resolve('./config/database/profile/birthdays.json');
 
 const profileCommand = {
     name: 'profile',
-    alias: ['perfil', 'me'],
+    alias: ['perfil'],
     category: 'profile',
     noPrefix: true,
 
