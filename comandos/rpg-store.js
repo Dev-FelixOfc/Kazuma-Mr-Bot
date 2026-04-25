@@ -5,7 +5,7 @@ import path from 'path';
 const shopCommand = {
     name: 'tienda',
     alias: ['shop', 'market', 'store'],
-    category: 'economy',
+    category: 'rpg',
     noPrefix: true,
 
     run: async (conn, m) => {
