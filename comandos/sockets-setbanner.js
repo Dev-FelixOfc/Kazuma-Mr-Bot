@@ -56,7 +56,9 @@ const setBanner = {
 
             await fs.writeJson(userSettingsPath, localConfig, { spaces: 2 });
 
-            const successMsg = `*${config.visuals.emoji3} \`BANNER ACTUALIZADO\` ${config.visuals.emoji3}*\n\nLa imagen ha sido subida y guardada en tu sesión.\n\n*🚀 Enlace:* ${fullLink}\n\n> ¡Ajuste aplicado correctamente!`;
+            const socketName = localConfig.shortName || config.botName;
+
+            const successMsg = `*${config.visuals.emoji3} \`BANNER ACTUALIZADO\` ${config.visuals.emoji3}*\n\nSe ha cambiado el banner para el socket *${socketName}*.\n\n*🚀 Enlace:* ${fullLink}\n\n> ¡Ajuste aplicado correctamente!`;
 
             await conn.sendMessage(from, { text: successMsg }, { quoted: m });
 
