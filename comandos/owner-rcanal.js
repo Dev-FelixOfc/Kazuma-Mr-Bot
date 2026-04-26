@@ -2,49 +2,68 @@ import { config } from '../config.js';
 
 const reactCanalCommand = {
     name: 'rcanal',
-    alias: ['testcanal', 'infocanal'],
+    alias: ['testcanal'],
     category: 'owner',
     isOwner: true,
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
-        const linkMatch = text.match(/https:\/\/whatsapp\.com\/channel\/[a-zA-Z0-9]+/);
+        // Limpieza profunda del link para evitar el Bad Request
+        const linkPattern = /https:\/\/whatsapp\.com\/channel\/([a-zA-Z0-9]+)/;
+        const match = text.match(linkPattern);
         
-        if (!linkMatch) {
-            return m.reply(`*${config.visuals.emoji2}* \`Error de Enlace\`\n\nProporciona un link válido de canal.`);
+        if (!match) {
+            return m.reply(`*${config.visuals.emoji2}* \`Error de Formato\`\n\nEl enlace debe ser: https://whatsapp.com/channel/XXXXX`);
         }
 
-        const link = linkMatch[0];
+        const canalUrl = match[0];
 
         try {
-            const res = await conn.newsletterMetadata('url', link);
-            
-            if (!res) return m.reply(`*${config.visuals.emoji2}* No se pudo obtener metadata.`);
+            // Usamos queryNewsletterMetadata que suele ser más estable para búsquedas rápidas
+            const res = await conn.newsletterMetadata('url', canalUrl).catch(async () => {
+                // Si falla, intentamos una segunda vía interna de Baileys
+                return await conn.query({
+                    tag: 'iq',
+                    attrs: { display_name: 'WhatsApp', to: '@s.whatsapp.net', type: 'get', xmlns: 'w:mex' },
+                    content: [{
+                        tag: 'query',
+                        attrs: { query_id: '6620195908089573' },
+                        content: JSON.stringify({ variables: { newsletter_id: canalUrl.split('/').pop() } })
+                    }]
+                });
+            });
 
-            const { id, name, subscribers, description, role, reaction_codes } = res;
+            if (!res) throw new Error("No se obtuvo respuesta del servidor Mex/GraphQL");
 
-            let info = `📊 \`TEST DE CANAL\` 📊\n\n`;
-            info += `📝 *Nombre:* ${name || 'No encontrado'}\n`;
-            info += `🆔 *JID:* ${id}\n`;
-            info += `👥 *Seguidores:* ${subscribers || 'Oculto/0'}\n`;
-            info += `🎭 *Tu Rol:* ${role || 'Ninguno'}\n`;
-            info += `✅ *Reacciones Permitidas:* ${reaction_codes?.mode || 'Desconocido'}\n`;
-            info += `📌 *Descripción:* ${description?.slice(0, 100) || 'Sin descripción'}...\n\n`;
-            
-            await m.reply(info);
+            // Extraemos los datos básicos
+            const id = res.id || 'No detectado';
+            const name = res.name || 'Privado/No encontrado';
+            const subs = res.subscribers || 'Ocultos';
 
-            const messages = await conn.fetchMessagesFromNewsletter(id, 1);
+            let diagnostic = `📊 *DIAGNÓSTICO DE CANAL*\n\n`;
+            diagnostic += `📝 *Nombre:* \`${name}\`\n`;
+            diagnostic += `🆔 *JID:* \`${id}\`\n`;
+            diagnostic += `👥 *Seguidores:* \`${subs}\`\n`;
+            diagnostic += `🎭 *Rol del Bot:* \`${res.role || 'Invitado'}\`\n`;
             
-            if (messages && messages.length > 0) {
-                const lastMsg = messages[0];
-                await m.reply(`✅ *Último Mensaje Detectado:*\nID: \`${lastMsg.id}\`\nTipo: \`${Object.keys(lastMsg.message || {})[0] || 'Desconocido'}\``);
-            } else {
-                await m.reply(`⚠️ *Aviso:* No se detectaron mensajes recientes en el historial.`);
+            await m.reply(diagnostic);
+
+            // Intentamos leer el último mensaje para ver si tenemos permisos de lectura
+            try {
+                const messages = await conn.fetchMessagesFromNewsletter(id, 1);
+                if (messages && messages.length > 0) {
+                    await m.reply(`✅ *Conexión Exitosa*\nÚltimo mensaje ID: \`${messages[0].id}\``);
+                } else {
+                    await m.reply(`⚠️ *Aviso:* No se detectaron mensajes (Canal vacío o sin permisos).`);
+                }
+            } catch (e) {
+                await m.reply(`❌ *Error de Lectura:* No tengo permiso para ver mensajes de este canal.`);
             }
 
         } catch (err) {
             console.error(err);
-            m.reply(`*${config.visuals.emoji2}* \`Fallo en el Test\`\n\nError: ${err.message}`);
+            // Si sigue saliendo Bad Request, es probable que la versión de Baileys necesite actualizarse
+            m.reply(`*${config.visuals.emoji2}* \`Fallo Crítico\`\n\nDetalle: ${err.message}\n> Intenta actualizar Baileys si el error persiste.`);
         }
     }
 };
