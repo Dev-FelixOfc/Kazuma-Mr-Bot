@@ -11,14 +11,19 @@ export default {
 
     run: async (conn, m) => {
         try {
-            const botNumber = conn.user.id.split(':')[0];
-            const senderBot = m.id.startsWith('BAE5') || m.id.length < 20;
+            const myJid = conn.user.id.split(':')[0].split(':')[0].replace(/\D/g, '');
+            const databasePath = path.join(process.cwd(), 'jsons', 'preferencias.json');
             
-            if (m.key.fromMe) return;
+            if (fs.existsSync(databasePath)) {
+                const db = await fs.readJson(databasePath);
+                if (db[m.chat]) {
+                    const primaryNumber = db[m.chat].replace(/\D/g, '');
+                    if (myJid !== primaryNumber) return;
+                }
+            }
 
             const mainSessionPath = path.resolve('./sesion_bot');
             const subSessionsPath = path.resolve('./sesiones_subbots');
-            
             const groupMetadata = await conn.groupMetadata(m.chat);
             const participants = groupMetadata.participants.map(p => p.id.split('@')[0]);
 
@@ -33,7 +38,7 @@ export default {
                 const credsFile = files.find(f => f === 'creds.json');
                 if (credsFile) {
                     const creds = await fs.readJson(path.join(mainSessionPath, 'creds.json'));
-                    mainBotNumber = creds.me.id.split(':')[0];
+                    mainBotNumber = creds.me.id.split(':')[0].replace(/\D/g, '');
                 }
             }
 
