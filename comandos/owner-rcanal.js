@@ -5,49 +5,44 @@ const reactCanalCommand = {
     alias: ['rcanal', 'reaccionar'],
     category: 'owner',
     isOwner: true,
-    noPrefix: true,
+    noPrefix: true, // Agregado como pediste
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
-        if (args.length < 2) return m.reply(`*${config.visuals.emoji2}* \`Uso Incorrecto\`\n\nEjemplo:\n${usedPrefix + commandName} https://whatsapp.com/channel/XXXXX 🔥`);
+        // Limpiamos el link por si viene con texto extra
+        const linkMatch = text.match(/https:\/\/whatsapp\.com\/channel\/[a-zA-Z0-9]+/);
+        const emoji = args.find(a => !a.includes('http')); // Busca el primer argumento que no sea link
 
-        let [link, emoji] = args;
-
-        if (!link.includes('whatsapp.com/channel/')) {
-            return m.reply(`*${config.visuals.emoji2}* El enlace proporcionado no parece ser un canal de WhatsApp válido.`);
+        if (!linkMatch || !emoji) {
+            return m.reply(`*${config.visuals.emoji2}* \`Uso Incorrecto\`\n\nEjemplo: ${usedPrefix}rcanal https://whatsapp.com/channel/XXXX 🔥`);
         }
 
+        const link = linkMatch[0];
+
         try {
-            // 1. Obtener el JID del canal a partir del link
-            let res = await conn.newsletterMetadata('url', link);
+            // Obtener metadata y asegurar que el bot reconozca el canal
+            let res = await conn.newsletterMetadata('url', link).catch(() => null);
+            if (!res) return m.reply(`*${config.visuals.emoji2}* No pude obtener información del canal. ¿El link es correcto?`);
+            
             let jidCanal = res.id;
 
-            // 2. Pedir los mensajes más recientes del canal
-            // Buscamos solo el último (limit: 1)
+            // Traer el último mensaje
             let messages = await conn.fetchMessagesFromNewsletter(jidCanal, 1);
-
-            if (!messages || messages.length === 0) {
-                return m.reply(`*${config.visuals.emoji2}* No se encontraron mensajes en ese canal.`);
-            }
+            if (!messages || messages.length === 0) return m.reply(`*${config.visuals.emoji2}* El canal parece estar vacío.`);
 
             let lastMsg = messages[0];
 
-            // 3. Enviar la reacción
             await conn.sendMessage(jidCanal, {
                 react: {
                     text: emoji,
-                    key: { 
-                        remoteJid: jidCanal, 
-                        id: lastMsg.id, 
-                        fromMe: false 
-                    }
+                    key: { remoteJid: jidCanal, id: lastMsg.id, fromMe: false }
                 }
             });
 
-            m.reply(`*${config.visuals.emoji}* Reacción \`${emoji}\` enviada con éxito al último mensaje del canal.`);
+            m.reply(`*${config.visuals.emoji}* Reaccioné con ${emoji} al último mensaje.`);
 
         } catch (err) {
             console.error(err);
-            m.reply(`*${config.visuals.emoji2}* \`Error\`\n\nNo pude reaccionar. Asegúrate de que el bot siga el canal o que el canal permita reacciones.`);
+            m.reply(`*${config.visuals.emoji2}* Error: El canal no permite reacciones o el bot no tiene acceso.`);
         }
     }
 };
