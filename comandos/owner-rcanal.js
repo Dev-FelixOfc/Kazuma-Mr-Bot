@@ -8,36 +8,42 @@ const followCanalCommand = {
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
-        const linkMatch = text.match(/https:\/\/whatsapp\.com\/channel\/([a-zA-Z0-9]+)/);
-        if (!linkMatch) return;
+        if (!text) return;
 
-        const link = linkMatch[0];
+        // Extraer el código después de /channel/
+        const code = text.split('/channel/')[1]?.split(' ')[0];
+        if (!code) return m.reply("❌ Link inválido.");
 
         try {
-            // Intentamos obtener el ID necesario para la acción de seguir
-            const res = await conn.newsletterMetadata('url', link);
-            
-            // Acción directa de seguir
-            await conn.newsletterFollow(res.id);
-
-            await m.reply(`✅ Canal seguido.`);
-
+            // Intentar seguir por ID/Código directamente
+            // Usamos el método interno del socket para newsletters
+            await conn.newsletterFollow(code);
+            await m.reply(`✅ Siguiendo: ${code}`);
         } catch (err) {
-            // Si falla por el error de GraphQL, intentamos forzarlo con una petición directa al servidor
+            // Segundo intento: Forzar vía query de mensajes (iq)
             try {
-                const code = link.split('/').pop();
                 await conn.query({
                     tag: 'iq',
-                    attrs: { to: '@s.whatsapp.net', type: 'set', xmlns: 'w:mex' },
+                    attrs: { 
+                        to: '@s.whatsapp.net', 
+                        type: 'set', 
+                        xmlns: 'w:mex' 
+                    },
                     content: [{
                         tag: 'query',
                         attrs: { query_id: '6620195908089573' },
-                        content: JSON.stringify({ variables: { newsletter_id: code } })
+                        content: JSON.stringify({ 
+                            variables: { 
+                                newsletter_id: code 
+                            } 
+                        })
                     }]
                 });
-                await m.reply(`✅ Canal seguido.`);
+                await m.reply(`✅ Siguiendo (vía query): ${code}`);
             } catch (e) {
-                await m.reply(`❌ No se pudo seguir.`);
+                // Si aquí no responde nada, el problema es tu versión de Baileys
+                console.error(e);
+                await m.reply("❌ Error total al intentar seguir.");
             }
         }
     }
