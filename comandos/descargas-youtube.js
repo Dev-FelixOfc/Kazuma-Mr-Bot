@@ -1,84 +1,98 @@
-import axios from 'axios';
+import fetch from 'node-fetch';
+import yts from 'yt-search';
 
 const youtubeCommand = {
     name: 'play',
-    alias: ['playvideo', 'playaudio', 'ytv', 'yta', 'playdoc'],
+    alias: ['play2', 'play3', 'play4', 'audio', 'video', 'playdoc', 'playdoc2', 'musica', 'ytv', 'yta'],
     category: 'download',
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
-        if (!text) return m.reply(`*❁* \`Falta Texto o Enlace\` *❁*\n\nIngresa un nombre o un enlace de YouTube.`);
-
-        const apiKey = "NEX-0868C926ADF94B19A51E18C4";
-        const isUrl = text.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/);
-
-        let finalUrl = text;
-        if (!isUrl) {
-            try {
-                const searchRes = await axios.get(`https://nex-magical.vercel.app/search/youtube?q=${encodeURIComponent(text)}&apikey=${apiKey}`, { timeout: 10000 });
-                if (!searchRes.data.status || !searchRes.data.result.length) return m.reply('*❁* `Sin Resultados` *❁*');
-                finalUrl = searchRes.data.result[0].link;
-            } catch (err) {
-                return m.reply('*❁* `Error de Búsqueda` *❁*');
-            }
-        }
-
-        await m.reply(`*✿︎* \`Enviando...\` *✿︎*\n\n> ⏳ Procesando su solicitud, espere un momento...`);
-
-        const isVideo = ['playvideo', 'ytv', 'playdoc'].includes(commandName);
-        const isDoc = commandName === 'playdoc';
-        const type = isVideo ? 'video' : 'audio';
+        if (!text) return m.reply(`*🤔 ¿Qué estás buscando?*\n*Ingrese el nombre o enlace de la canción*\n\n*Ejemplo:*\n${usedPrefix + commandName} emilia 420`);
 
         try {
-            const downloadRes = await axios.get(`https://nex-magical.vercel.app/download/${type}?url=${encodeURIComponent(finalUrl)}&apikey=${apiKey}`, { timeout: 15000 });
-            if (!downloadRes.data.status || !downloadRes.data.result.url) return m.reply('*❁* `Error de Descarga` *❁*');
+            // 1. Búsqueda
+            const yt_search = await yts(text);
+            const video = yt_search.videos[0];
+            if (!video) return m.reply('*❁* `Sin Resultados` *❁*');
 
-            const { url: dlUrl, info, quality } = downloadRes.data.result;
-            const title = info.title || 'YouTube Content';
+            const tipoDescarga = ['play', 'musica', 'audio', 'yta'].includes(commandName) ? 'audio' : 'video';
+            
+            // 2. Mensaje de espera (Caption estilo LoliBot pero con tus textos)
+            const infoBot = `┏━━━━✿︎ 𝐘𝐎𝐔𝐓𝐔𝐁𝐄 ✿︎━━━━╮
+┃ ✐ *Título:* ${video.title}
+┃ ✐ *Duración:* ${video.timestamp}
+┃ ✐ *Estado:* Enviando ${tipoDescarga}...
+╰━━━━━━━━━━━━━━━━━━━╯`;
 
-            const infoText = `*» (❍ᴥ❍ʋ) \`YOUTUBE ${type.toUpperCase()}\` «*\n> ꕥ Contenido obtenido con éxito.\n\n*✿︎ Título:* \`${title}\`\n*✿︎ Calidad:* \`${quality || 'estándar'}\`\n\n> Enviando archivo...`;
+            await conn.sendMessage(m.chat, { 
+                image: { url: video.thumbnail }, 
+                caption: infoBot 
+            }, { quoted: m });
 
-            await conn.sendMessage(m.chat, { image: { url: info.thumbnail }, caption: infoText }, { quoted: m });
+            // 3. Lógica de APIs (Fallback)
+            // He dejado las APIs que no requieren librerías locales para que te funcione de una
+            const isVideo = ['play2', 'video', 'playdoc2', 'ytv'].includes(commandName);
+            const downloadType = isVideo ? 'video' : 'audio';
 
-            // Intento de descarga con buffer y configuración de headers
-            const fileBuffer = await axios.get(dlUrl, { 
-                responseType: 'arraybuffer',
-                timeout: 60000, // 1 minuto de margen para archivos grandes
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            const apis = [
+                `https://api.siputzx.my.id/api/d/ytmp4?url=${video.url}`,
+                `https://api.zenkey.my.id/api/download/ytmp3?apikey=zenkey&url=${video.url}`,
+                `https://api.dorratz.com/v3/ytdl?url=${video.url}`
+            ];
+
+            let mediaBuffer = null;
+            let success = false;
+
+            for (const api of apis) {
+                try {
+                    const res = await fetch(api);
+                    const data = await res.json();
+                    let dlUrl = data.dl || data.result?.download?.url || data.medias?.find(m => m.extension === (isVideo ? 'mp4' : 'mp3'))?.url;
+
+                    if (dlUrl) {
+                        const fileRes = await fetch(dlUrl);
+                        if (fileRes.ok) {
+                            mediaBuffer = await fileRes.buffer();
+                            success = true;
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    console.log(`Fallo en API: ${api}`);
+                    continue;
                 }
-            });
+            }
 
-            const finalBuffer = Buffer.from(fileBuffer.data);
+            if (!success) throw new Error("Todas las APIs fallaron");
+
+            // 4. Envío de archivos (Documento o Multimedia)
+            const isDoc = ['play3', 'play4', 'playdoc', 'playdoc2'].includes(commandName);
 
             if (isDoc) {
                 await conn.sendMessage(m.chat, { 
-                    document: finalBuffer, 
+                    document: mediaBuffer, 
                     mimetype: isVideo ? 'video/mp4' : 'audio/mpeg',
-                    fileName: `${title}.${isVideo ? 'mp4' : 'mp3'}`,
+                    fileName: `${video.title}.${isVideo ? 'mp4' : 'mp3'}`,
                     caption: `> Descargado por Kazuma Mister Bot`
                 }, { quoted: m });
             } else if (isVideo) {
                 await conn.sendMessage(m.chat, { 
-                    video: finalBuffer, 
+                    video: mediaBuffer, 
                     mimetype: 'video/mp4',
-                    caption: `> Descargado por Kazuma Mister Bot`
+                    caption: `🔰 Título: ${video.title}`
                 }, { quoted: m });
             } else {
                 await conn.sendMessage(m.chat, { 
-                    audio: finalBuffer, 
+                    audio: mediaBuffer, 
                     mimetype: 'audio/mpeg',
-                    ptt: false 
+                    ptt: false
                 }, { quoted: m });
             }
 
-        } catch (err) {
-            console.error('Detalle del error:', err.message);
-            if (err.code === 'ECONNABORTED') {
-                m.reply('*❁* `Error de Tiempo` *❁*\n\n> El servidor tardó demasiado en responder.');
-            } else {
-                m.reply('*❁* `Error Crítico` *❁*\n\n> No se pudo procesar el archivo. Prueba con otro enlace.');
-            }
+        } catch (error) {
+            console.error(error);
+            m.reply('❌ No se pudo procesar la descarga con ninguna de las APIs disponibles.');
         }
     }
 };
