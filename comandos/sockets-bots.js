@@ -17,41 +17,41 @@ export default {
             let subBotsList = '';
             let mentions = [];
 
-            // 1. Lógica para el Bot Principal
-            let mainName = config.botName;
+            // --- LÓGICA PARA EL BOT PRINCIPAL ---
+            let mainName = config.botName; // Valor por defecto del config
             const mainSettingsPath = path.resolve(`./sesiones_subbots/${mainBotNumber}/settings.json`);
             
             if (await fs.pathExists(mainSettingsPath)) {
                 const mainData = await fs.readJson(mainSettingsPath);
-                // Prioridad: Nombre Corto > Nombre Largo > Config
                 mainName = mainData.shortName || mainData.longName || config.botName;
             }
             mentions.push(`${mainBotNumber}@s.whatsapp.net`);
-            
             let mainLine = `  ➪ *[Principal ${mainName}]* » @${mainBotNumber}`;
 
-            // 2. Lógica para los Sub-Bots
+            // --- LÓGICA PARA LOS SUB-BOTS ---
             if (await fs.pathExists(sessionsPath)) {
-                const folders = (await fs.readdir(sessionsPath));
+                const folders = await fs.readdir(sessionsPath);
 
                 for (const folder of folders) {
                     const fullPath = path.join(sessionsPath, folder);
-                    const isDirectory = (await fs.stat(fullPath)).isDirectory();
                     
-                    if (!isDirectory || folder.startsWith('.')) continue;
+                    // Validar que sea carpeta y no sea la del principal ni archivos ocultos
+                    if (!(await fs.stat(fullPath)).isDirectory() || folder.startsWith('.')) continue;
 
                     const num = folder.replace(/\D/g, '');
                     
                     if (num && num !== mainBotNumber) {
-                        let subName = 'Sub-Bot';
+                        // Todos los sub-bots empiezan con el nombre del config por si no tienen settings.json
+                        let subName = config.botName; 
                         const subSettingsPath = path.join(fullPath, 'settings.json');
 
                         if (await fs.pathExists(subSettingsPath)) {
                             try {
                                 const subData = await fs.readJson(subSettingsPath);
-                                subName = subData.shortName || subData.longName || 'Sub-Bot';
+                                // Prioridad: Corto > Largo > Config
+                                subName = subData.shortName || subData.longName || config.botName;
                             } catch (e) {
-                                subName = 'Sub-Bot'; 
+                                subName = config.botName; 
                             }
                         }
 
@@ -62,7 +62,7 @@ export default {
                 }
             }
 
-            // 3. Construcción del Mensaje Final
+            // --- CONSTRUCCIÓN DEL MENSAJE ---
             const header = `*${config.visuals.emoji3}* \`LISTA DE SOCKETS ACTIVOS\` *${config.visuals.emoji3}*`;
             const stats = `\n\n*❁ Principal » 1*\n*❀ Subs Totales » ${totalSubs}*\n\n*❀ DETALLE:*`;
             
@@ -75,7 +75,6 @@ export default {
 
         } catch (e) {
             console.error('Error en comando sockets:', e);
-            // No reply aquí para evitar spam si falla algo interno, o un reply simple:
             m.reply(`*${config.visuals.emoji2}* Error al listar los sockets.`);
         }
     }
