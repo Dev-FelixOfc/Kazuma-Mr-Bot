@@ -53,7 +53,7 @@ const menuCommand = {
 ┃ https://whatsapp.com/channel/0029Vb6sgWdJkK73qeLU0J0N
 ╰━━━━━━━━━━━━━━━━━━━╯\n`;
 
-            const infoUser = `┏━━━━✿︎ 𝐈𝐍𝐅𝐎-𝐔𝐒𝐄𝐑 ✿︎━━━━╮
+            const infoUser = `┏━━━━✿︎ 𝐈𝐍𝐅𝐎-𝐔𝐒𝐄Ｒ ✿︎━━━━╮
 ┃ ✐ *Usuario* »  @${user}
 ┃ ✐ *Rango* » ${rank}
 ┃ ✐ *Coins* » ¥${wallet.toLocaleString()}
@@ -61,27 +61,30 @@ const menuCommand = {
 ╰━━━━━━━━━━━━━━━━━━━╯`;
 
             let header = `¡Hola! Soy ${displayLongName} (${botType}).\n\n`;
-            let subHeader = "";
-            let finalBody = "";
+            let textoFinal = "";
 
+            // CASO 1: No hay input (Menú completo)
             if (!input) {
-                subHeader = `*☞︎︎︎ Aqui está mi lista de comandos completa ☜︎︎︎*\n\n`;
-                finalBody = Object.values(menuCategories).join('\n\n');
-            } else {
-                if (menuCategories[input]) {
-                    subHeader = `*☞︎︎︎ Aqui está mi lista de comandos para \`${input.toUpperCase()}\` ☜︎︎︎*\n\n`;
-                    finalBody = menuCategories[input];
-                } else {
-                    return m.reply(`*${config.visuals.emoji2}* \`Categoría no encontrada\`\n\n*Las categorías disponibles son* »\n${Object.keys(menuCategories).map(c => `> ➪ ${c}`).join('\n')}`);
-                }
+                let subHeader = `*☞︎︎︎ Aqui está mi lista de comandos completa ☜︎︎︎*\n\n`;
+                let body = Object.values(menuCategories).join('\n\n');
+                textoFinal = `${header}${subHeader}${infoBot}\n${infoUser}\n\n${body}`;
+            } 
+            // CASO 2: La categoría existe
+            else if (menuCategories[input]) {
+                let subHeader = `*☞︎︎︎ Aqui está mi lista de comandos para \`${input.toUpperCase()}\` ☜︎︎︎*\n\n`;
+                let body = menuCategories[input];
+                textoFinal = `${header}${subHeader}${infoBot}\n${infoUser}\n\n${body}`;
+            } 
+            // CASO 3: El input no es una categoría válida (Aviso de error)
+            else {
+                return m.reply(`*${config.visuals.emoji2}* \`Categoría no encontrada\`\n\n*Las categorías disponibles son* »\n${Object.keys(menuCategories).map(c => `> ➪ ${c}`).join('\n')}`);
             }
 
-            let textoMenu = `${header}${subHeader}${infoBot}\n${infoUser}\n\n${finalBody}`;
-            textoMenu = textoMenu.replace(/\${prefix}/g, prefix);
+            textoFinal = textoFinal.replace(/\${prefix}/g, prefix);
 
             await conn.sendMessage(m.chat, { 
                 image: { url: displayBanner }, 
-                caption: textoMenu,
+                caption: textoFinal,
                 mentions: [m.sender]
             }, { quoted: m });
 
