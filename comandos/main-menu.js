@@ -53,7 +53,7 @@ const menuCommand = {
 ┃ https://whatsapp.com/channel/0029Vb6sgWdJkK73qeLU0J0N
 ╰━━━━━━━━━━━━━━━━━━━╯\n`;
 
-            const infoUser = `┏━━━━✿︎ 𝐈𝐍𝐅𝐎-𝐔𝐒𝐄Ｒ ✿︎━━━━╮
+            const infoUser = `┏━━━━✿︎ 𝐈𝐍𝐅𝐎-𝐔𝐒𝐄𝐑 ✿︎━━━━╮
 ┃ ✐ *Usuario* »  @${user}
 ┃ ✐ *Rango* » ${rank}
 ┃ ✐ *Coins* » ¥${wallet.toLocaleString()}
@@ -61,30 +61,32 @@ const menuCommand = {
 ╰━━━━━━━━━━━━━━━━━━━╯`;
 
             let header = `¡Hola! Soy ${displayLongName} (${botType}).\n\n`;
-            let textoFinal = "";
+            let subHeader = "";
+            let finalBody = "";
 
-            // CASO 1: No hay input (Menú completo)
+            // LÓGICA DE FILTRADO REAL
             if (!input) {
-                let subHeader = `*☞︎︎︎ Aqui está mi lista de comandos completa ☜︎︎︎*\n\n`;
-                let body = Object.values(menuCategories).join('\n\n');
-                textoFinal = `${header}${subHeader}${infoBot}\n${infoUser}\n\n${body}`;
-            } 
-            // CASO 2: La categoría existe
-            else if (menuCategories[input]) {
-                let subHeader = `*☞︎︎︎ Aqui está mi lista de comandos para \`${input.toUpperCase()}\` ☜︎︎︎*\n\n`;
-                let body = menuCategories[input];
-                textoFinal = `${header}${subHeader}${infoBot}\n${infoUser}\n\n${body}`;
-            } 
-            // CASO 3: El input no es una categoría válida (Aviso de error)
-            else {
-                return m.reply(`*${config.visuals.emoji2}* \`Categoría no encontrada\`\n\n*Las categorías disponibles son* »\n${Object.keys(menuCategories).map(c => `> ➪ ${c}`).join('\n')}`);
+                // CASO: Solo puso #menu
+                subHeader = `*☞︎︎︎ Aqui está mi lista de comandos completa ☜︎︎︎*\n\n`;
+                finalBody = Object.values(menuCategories).join('\n\n');
+            } else {
+                // CASO: Escribió algo después de #menu
+                if (menuCategories[input]) {
+                    // SI LA CATEGORÍA EXISTE
+                    subHeader = `*☞︎︎︎ Aqui está mi lista de comandos para \`${input.toUpperCase()}\` ☜︎︎︎*\n\n`;
+                    finalBody = menuCategories[input];
+                } else {
+                    // SI ESCRIBIÓ BASURA (Como en tu captura "kqjdiwvq")
+                    return m.reply(`*${config.visuals.emoji2}* \`Categoría no encontrada\`\n\n*Las categorías disponibles son* »\n${Object.keys(menuCategories).map(c => `> ➪ ${c}`).join('\n')}`);
+                }
             }
 
-            textoFinal = textoFinal.replace(/\${prefix}/g, prefix);
+            let textoMenu = `${header}${subHeader}${infoBot}\n${infoUser}\n\n${finalBody}`;
+            textoMenu = textoMenu.replace(/\${prefix}/g, prefix);
 
             await conn.sendMessage(m.chat, { 
                 image: { url: displayBanner }, 
-                caption: textoFinal,
+                caption: textoMenu,
                 mentions: [m.sender]
             }, { quoted: m });
 
