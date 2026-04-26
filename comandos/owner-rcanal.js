@@ -1,48 +1,50 @@
 import { config } from '../config.js';
 
 const reactCanalCommand = {
-    name: 'reactcanal',
-    alias: ['rcanal', 'reaccionar'],
+    name: 'rcanal',
+    alias: ['testcanal', 'infocanal'],
     category: 'owner',
     isOwner: true,
-    noPrefix: true, // Agregado como pediste
+    noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
-        // Limpiamos el link por si viene con texto extra
         const linkMatch = text.match(/https:\/\/whatsapp\.com\/channel\/[a-zA-Z0-9]+/);
-        const emoji = args.find(a => !a.includes('http')); // Busca el primer argumento que no sea link
-
-        if (!linkMatch || !emoji) {
-            return m.reply(`*${config.visuals.emoji2}* \`Uso Incorrecto\`\n\nEjemplo: ${usedPrefix}rcanal https://whatsapp.com/channel/XXXX 🔥`);
+        
+        if (!linkMatch) {
+            return m.reply(`*${config.visuals.emoji2}* \`Error de Enlace\`\n\nProporciona un link válido de canal.`);
         }
 
         const link = linkMatch[0];
 
         try {
-            // Obtener metadata y asegurar que el bot reconozca el canal
-            let res = await conn.newsletterMetadata('url', link).catch(() => null);
-            if (!res) return m.reply(`*${config.visuals.emoji2}* No pude obtener información del canal. ¿El link es correcto?`);
+            const res = await conn.newsletterMetadata('url', link);
             
-            let jidCanal = res.id;
+            if (!res) return m.reply(`*${config.visuals.emoji2}* No se pudo obtener metadata.`);
 
-            // Traer el último mensaje
-            let messages = await conn.fetchMessagesFromNewsletter(jidCanal, 1);
-            if (!messages || messages.length === 0) return m.reply(`*${config.visuals.emoji2}* El canal parece estar vacío.`);
+            const { id, name, subscribers, description, role, reaction_codes } = res;
 
-            let lastMsg = messages[0];
+            let info = `📊 \`TEST DE CANAL\` 📊\n\n`;
+            info += `📝 *Nombre:* ${name || 'No encontrado'}\n`;
+            info += `🆔 *JID:* ${id}\n`;
+            info += `👥 *Seguidores:* ${subscribers || 'Oculto/0'}\n`;
+            info += `🎭 *Tu Rol:* ${role || 'Ninguno'}\n`;
+            info += `✅ *Reacciones Permitidas:* ${reaction_codes?.mode || 'Desconocido'}\n`;
+            info += `📌 *Descripción:* ${description?.slice(0, 100) || 'Sin descripción'}...\n\n`;
+            
+            await m.reply(info);
 
-            await conn.sendMessage(jidCanal, {
-                react: {
-                    text: emoji,
-                    key: { remoteJid: jidCanal, id: lastMsg.id, fromMe: false }
-                }
-            });
-
-            m.reply(`*${config.visuals.emoji}* Reaccioné con ${emoji} al último mensaje.`);
+            const messages = await conn.fetchMessagesFromNewsletter(id, 1);
+            
+            if (messages && messages.length > 0) {
+                const lastMsg = messages[0];
+                await m.reply(`✅ *Último Mensaje Detectado:*\nID: \`${lastMsg.id}\`\nTipo: \`${Object.keys(lastMsg.message || {})[0] || 'Desconocido'}\``);
+            } else {
+                await m.reply(`⚠️ *Aviso:* No se detectaron mensajes recientes en el historial.`);
+            }
 
         } catch (err) {
             console.error(err);
-            m.reply(`*${config.visuals.emoji2}* Error: El canal no permite reacciones o el bot no tiene acceso.`);
+            m.reply(`*${config.visuals.emoji2}* \`Fallo en el Test\`\n\nError: ${err.message}`);
         }
     }
 };
