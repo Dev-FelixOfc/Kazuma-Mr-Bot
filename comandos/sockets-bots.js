@@ -7,43 +7,49 @@ export default {
     alias: ['sockets', 'bots', 'lista'],
     category: 'sockets',
     noPrefix: true,
-    isGroup: true, // El handler se encargará de rebotar si es privado
+    isGroup: true,
 
     run: async (conn, m) => {
         try {
-            const sessionsPath = path.resolve('./sesiones_subbots');
-            const mainBotNumber = conn.user.id.split(':')[0];
+            const mainSessionPath = path.resolve('./sesion_bot');
+            const subSessionsPath = path.resolve('./sesiones_subbots');
+            
             const groupMetadata = await conn.groupMetadata(m.chat);
             const participants = groupMetadata.participants.map(p => p.id.split('@')[0]);
 
+            let mainBotNumber = '';
             let totalSubs = 0;
             let subBotsList = '';
+            let mainBotLine = '';
             let mentions = [];
 
-            // --- LÓGICA PARA EL BOT PRINCIPAL ---
-            // El principal siempre se muestra si está respondiendo, pero verificamos nombre
-            let mainName = config.botName;
-            const mainSettingsPath = path.resolve(`./sesiones_subbots/${mainBotNumber}/settings.json`);
-            
-            if (await fs.pathExists(mainSettingsPath)) {
-                const mainData = await fs.readJson(mainSettingsPath);
-                mainName = mainData.shortName || mainData.longName || config.botName;
+            // 1. DETECTAR QUIÉN ES EL PRINCIPAL DESDE LOS ARCHIVOS
+            if (await fs.pathExists(mainSessionPath)) {
+                const files = await fs.readdir(mainSessionPath);
+                const credsFile = files.find(f => f === 'creds.json');
+                if (credsFile) {
+                    const creds = await fs.readJson(path.join(mainSessionPath, 'creds.json'));
+                    mainBotNumber = creds.me.id.split(':')[0];
+                }
             }
-            
-            mentions.push(`${mainBotNumber}@s.whatsapp.net`);
-            let mainLine = `  ➪ *[Principal ${mainName}]* » @${mainBotNumber}`;
 
-            // --- LÓGICA PARA LOS SUB-BOTS (FILTRADO POR GRUPO) ---
-            if (await fs.pathExists(sessionsPath)) {
-                const folders = await fs.readdir(sessionsPath);
+            // Si el principal está en el grupo, lo listamos con el nombre del config
+            if (mainBotNumber && participants.includes(mainBotNumber)) {
+                mainBotLine = `  ➪ *[Principal ${config.botName}]* » @${mainBotNumber}\n`;
+                mentions.push(`${mainBotNumber}@s.whatsapp.net`);
+            }
+
+            // 2. DETECTAR SUBS EN EL GRUPO
+            if (await fs.pathExists(subSessionsPath)) {
+                const folders = await fs.readdir(subSessionsPath);
 
                 for (const folder of folders) {
-                    const fullPath = path.join(sessionsPath, folder);
+                    const fullPath = path.join(subSessionsPath, folder);
                     if (!(await fs.stat(fullPath)).isDirectory() || folder.startsWith('.')) continue;
 
                     const num = folder.replace(/\D/g, '');
                     
-                    // SEGURIDAD: Solo agregar si el número del sub-bot está en la lista de participantes del grupo
+                    // Solo si está en el grupo y NO es el principal detectado arriba
                     if (num && num !== mainBotNumber && participants.includes(num)) {
                         let subName = config.botName; 
                         const subSettingsPath = path.join(fullPath, 'settings.json');
@@ -64,12 +70,15 @@ export default {
                 }
             }
 
-            // --- CONSTRUCCIÓN DEL MENSAJE ---
+            // 3. CONSTRUCCIÓN DEL MENSAJE
             const header = `*${config.visuals.emoji3}* \`LISTA DE SOCKETS ACTIVOS\` *${config.visuals.emoji3}*`;
-            // Cambiado "DETALLE" por "EN ESTE GRUPO" como pediste
-            const stats = `\n\n*❁ Principal » 1*\n*❀ Subs en este grupo » ${totalSubs}*\n\n*❀ EN ESTE GRUPO:*`;
+            const stats = `\n\n*❁ Principal » ${mainBotLine ? '1' : '0'}*\n*❀ Subs en este grupo » ${totalSubs}*\n\n*❀ EN ESTE GRUPO:*`;
             
-            const textoFinal = `${header}${stats}\n${mainLine}\n${subBotsList}\n\n> ¡Sistemas operativos y estables en esta comunidad!`;
+            const textoFinal = `${header}${stats}\n${mainBotLine}${subBotsList}\n\n> ¡Sistemas operativos y estables en esta comunidad!`;
+
+            if (!mainBotLine && !subBotsList) {
+                return m.reply(`*${config.visuals.emoji2}* No hay sockets de mi sistema en este grupo.`);
+            }
 
             await conn.sendMessage(m.chat, { 
                 text: textoFinal.trim(),
@@ -78,7 +87,7 @@ export default {
 
         } catch (e) {
             console.error('Error en comando sockets:', e);
-            m.reply(`*${config.visuals.emoji2}* Error al filtrar los sockets del grupo.`);
+            m.reply(`*${config.visuals.emoji2}* Error al filtrar los sockets.`);
         }
     }
 };
