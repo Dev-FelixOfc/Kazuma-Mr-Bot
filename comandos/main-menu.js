@@ -3,9 +3,6 @@ import { menuCategories } from '../config/menu.js';
 import fs from 'fs-extra';
 import path from 'path';
 
-const ecoPath = path.resolve('./config/database/economy/economy.json');
-const rpgPath = path.resolve('./config/database/rpg/rpg.json');
-
 const menuCommand = {
     name: 'menu',
     alias: ['help', 'menú', 'ayuda'],
@@ -19,28 +16,22 @@ const menuCommand = {
             const botType = config.getBotType(conn);
             const input = args[0]?.toLowerCase();
 
-            const user = m.sender.split('@')[0].split(':')[0];
-            const group = m.chat;
-
             const botNumber = conn.user.id.split(':')[0];
             const settingsPath = path.resolve(`./sesiones_subbots/${botNumber}/settings.json`);
 
             let displayLongName = config.botName;
-            let displayBanner = config.visuals.img1;
 
             if (fs.existsSync(settingsPath)) {
                 const localData = await fs.readJson(settingsPath);
-                if (localData.longName) displayLongName = localData.longName;
-                if (localData.banner) displayBanner = localData.banner;
+                if (localData.longName) {
+                    displayLongName = localData.longName;
+                }
             }
 
-            const ecoDB = fs.existsSync(ecoPath) ? await fs.readJson(ecoPath) : {};
-            const rpgDB = fs.existsSync(rpgPath) ? await fs.readJson(rpgPath) : {};
-
-            const wallet = ecoDB[user]?.wallet || 0;
-            const userRpg = rpgDB[group]?.[user] || {};
-            const rank = userRpg.rank || 'Novato de las Cuevas';
-            const diamantes = userRpg.minerals?.diamantes || 0;
+            let header = `¡Hola! Soy ${displayLongName} (${botType}).\n\n`;
+            let subHeader = input && menuCategories[input] 
+                ? `*☞︎︎︎ Aqui está mi lista de comandos para \`${input.toUpperCase()}\` ☜︎︎︎*\n\n`
+                : `*☞︎︎︎ Aqui está mi lista de comandos ☜︎︎︎*\n\n`;
 
             const infoBot = `┏━━━━✿︎ 𝐈𝐍𝐅𝐎-𝐁𝐎𝐓 ✿︎━━━━╮
 ┃ ✐ *Owner* »
@@ -51,36 +42,24 @@ const menuCommand = {
 ┃ upload.yotsuba.giize.com
 ┃ ✐ *Official channel* »
 ┃ https://whatsapp.com/channel/0029Vb6sgWdJkK73qeLU0J0N
-╰━━━━━━━━━━━━━━━━━━━╯\n`;
-
-            const infoUser = `┏━━━━✿︎ 𝐈𝐍𝐅𝐎-𝐔𝐒𝐄𝐑 ✿︎━━━━╮
-┃ ✐ *Usuario* »  @${user}
-┃ ✐ *Rango* » ${rank}
-┃ ✐ *Coins* » ¥${wallet.toLocaleString()}
-┃ ✐ *Diamantes* » ${diamantes}
 ╰━━━━━━━━━━━━━━━━━━━╯`;
 
-            let header = `¡Hola! Soy ${displayLongName} (${botType}).\n\n`;
-            let subHeader = "";
             let finalBody = "";
 
             if (!input) {
-                subHeader = `*☞︎︎︎ Aqui está mi lista de comandos completa ☜︎︎︎*\n\n`;
                 finalBody = Object.values(menuCategories).join('\n\n');
             } else if (menuCategories[input]) {
-                subHeader = `*☞︎︎︎ Aqui está mi lista de comandos para \`${input.toUpperCase()}\` ☜︎︎︎*\n\n`;
                 finalBody = menuCategories[input];
             } else {
                 return m.reply(`*${config.visuals.emoji2}* \`Categoría no encontrada\`\n\n*Las categorías disponibles son* »\n${Object.keys(menuCategories).map(c => `> ➪ ${c}`).join('\n')}`);
             }
 
-            let textoMenu = `${header}${subHeader}${infoBot}\n${infoUser}\n\n${finalBody}`;
+            let textoMenu = `${header}${subHeader}${infoBot}\n\n${finalBody}`;
             textoMenu = textoMenu.replace(/\${prefix}/g, prefix);
 
             await conn.sendMessage(m.chat, { 
-                image: { url: displayBanner }, 
-                caption: textoMenu,
-                mentions: [m.sender]
+                image: { url: config.visuals.img1 }, 
+                caption: textoMenu
             }, { quoted: m });
 
         } catch (err) {
