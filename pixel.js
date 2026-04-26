@@ -12,7 +12,7 @@ export const pixelHandler = async (conn, m, config) => {
         const chat = m.key.remoteJid;
         if (chat === 'status@broadcast') return;
 
-        const sender = m.sender || m.key.participant || m.key.remoteJid;
+        const sender = m.sender;
         const misIdentidades = config.owner || [];
         const isOwner = misIdentidades.some(id => (typeof id === 'string' ? id : id[0]).includes(sender.split('@')[0])) || m.key.fromMe;
         const isGroup = chat.endsWith('@g.us');
@@ -22,7 +22,7 @@ export const pixelHandler = async (conn, m, config) => {
                      (type === 'extendedTextMessage') ? m.message.extendedTextMessage.text : 
                      (m.message[type] && m.message[type].caption) ? m.message[type].caption : '';
 
-        if (!body) return;
+        if (!body && !m.quoted) return;
 
         let activePrefixes = config.allPrefixes || ['#', '!', '.'];
         if (fs.existsSync(prefixPath)) {
@@ -55,7 +55,11 @@ export const pixelHandler = async (conn, m, config) => {
         }
 
         const args = body.trim().split(/ +/).slice(1);
-        const text = args.join(' ');
+        let text = args.join(' ');
+        
+        if (!text && m.quoted && m.quoted.text) {
+            text = m.quoted.text;
+        }
 
         const cmd = global.commands.get(commandName) || 
                     Array.from(global.commands.values()).find(c => c.alias && c.alias.includes(commandName));
@@ -69,20 +73,16 @@ export const pixelHandler = async (conn, m, config) => {
         if (!isGroup && !isOwner && commandName !== 'code') return;
 
         if (cmd.isOwner && !isOwner) {
-            return m.reply(`*❁* \`ACCESO DENEGADO\` *❁*\n\nID: \`${sender}\`\n\n> ¡Solo mi desarrollador puede usar esto!`);
+            return m.reply(`*${config.visuals.emoji2}* \`ACCESO DENEGADO\``);
         }
 
         if (cmd.isGroup && !isGroup) {
-            return m.reply('*✿︎* \`Aviso\` *✿︎*\n\nEste comando solo puede ser utilizado en grupos.');
+            return m.reply(`*${config.visuals.emoji2}* Solo en grupos.`);
         }
 
-        if (!global.db.data.chats[chat]) global.db.data.chats[chat] = { rolls: {} };
-
-        // Extraemos estas variables sin cambiar la estructura de ejecución principal
         const quoted = m.quoted ? m.quoted : m;
         const mime = (quoted.msg || quoted).mimetype || '';
 
-        // Mantenemos tu orden original de argumentos para no romper los comandos
         await cmd.run(conn, m, args, usedPrefix, commandName, text, { quoted, mime, isOwner, isGroup });
 
     } catch (err) {
