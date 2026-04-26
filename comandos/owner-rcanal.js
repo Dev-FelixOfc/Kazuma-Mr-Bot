@@ -1,71 +1,55 @@
+import fetch from 'node-fetch';
 import { config } from '../config.js';
 
-const reactCanalCommand = {
+const rcanalCommand = {
     name: 'rcanal',
-    alias: ['testcanal'],
+    alias: ['testcanal', 'infocanal'],
     category: 'owner',
     isOwner: true,
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
-        // Limpieza profunda del link para evitar el Bad Request
-        const linkPattern = /https:\/\/whatsapp\.com\/channel\/([a-zA-Z0-9]+)/;
-        const match = text.match(linkPattern);
+        const linkMatch = text.match(/https:\/\/whatsapp\.com\/channel\/([a-zA-Z0-9]+)/);
         
-        if (!match) {
-            return m.reply(`*${config.visuals.emoji2}* \`Error de Formato\`\n\nEl enlace debe ser: https://whatsapp.com/channel/XXXXX`);
+        if (!linkMatch) {
+            return m.reply(`*${config.visuals.emoji2}* \`Formato Inválido\`\n\nUsa un enlace válido de canal.`);
         }
 
-        const canalUrl = match[0];
+        const link = linkMatch[0];
 
         try {
-            // Usamos queryNewsletterMetadata que suele ser más estable para búsquedas rápidas
-            const res = await conn.newsletterMetadata('url', canalUrl).catch(async () => {
-                // Si falla, intentamos una segunda vía interna de Baileys
-                return await conn.query({
-                    tag: 'iq',
-                    attrs: { display_name: 'WhatsApp', to: '@s.whatsapp.net', type: 'get', xmlns: 'w:mex' },
-                    content: [{
-                        tag: 'query',
-                        attrs: { query_id: '6620195908089573' },
-                        content: JSON.stringify({ variables: { newsletter_id: canalUrl.split('/').pop() } })
-                    }]
-                });
-            });
+            const response = await fetch(link);
+            const html = await response.text();
 
-            if (!res) throw new Error("No se obtuvo respuesta del servidor Mex/GraphQL");
+            // Buscamos el nombre del canal
+            const nameMatch = html.match(/<title>(.*?)<\/title>/);
+            let name = nameMatch ? nameMatch[1].replace('WhatsApp Channel', '').trim() : 'No encontrado';
 
-            // Extraemos los datos básicos
-            const id = res.id || 'No detectado';
-            const name = res.name || 'Privado/No encontrado';
-            const subs = res.subscribers || 'Ocultos';
+            // Buscamos la cantidad de seguidores en la metadata
+            const subsMatch = html.match(/([\d.,KMB]+)\sfollowers/i) || html.match(/([\d.,KMB]+)\sseguidores/i);
+            let followers = subsMatch ? subsMatch[1] : 'Oculto o no detectado';
 
-            let diagnostic = `📊 *DIAGNÓSTICO DE CANAL*\n\n`;
-            diagnostic += `📝 *Nombre:* \`${name}\`\n`;
-            diagnostic += `🆔 *JID:* \`${id}\`\n`;
-            diagnostic += `👥 *Seguidores:* \`${subs}\`\n`;
-            diagnostic += `🎭 *Rol del Bot:* \`${res.role || 'Invitado'}\`\n`;
-            
-            await m.reply(diagnostic);
+            // Buscamos la imagen de perfil del canal
+            const imgMatch = html.match(/property="og:image" content="(.*?)"/);
+            let profileImg = imgMatch ? imgMatch[1] : null;
 
-            // Intentamos leer el último mensaje para ver si tenemos permisos de lectura
-            try {
-                const messages = await conn.fetchMessagesFromNewsletter(id, 1);
-                if (messages && messages.length > 0) {
-                    await m.reply(`✅ *Conexión Exitosa*\nÚltimo mensaje ID: \`${messages[0].id}\``);
-                } else {
-                    await m.reply(`⚠️ *Aviso:* No se detectaron mensajes (Canal vacío o sin permisos).`);
-                }
-            } catch (e) {
-                await m.reply(`❌ *Error de Lectura:* No tengo permiso para ver mensajes de este canal.`);
+            let info = `📊 \`INFO DESDE LA WEB\` 📊\n\n`;
+            info += `📝 *Nombre:* ${name}\n`;
+            info += `👥 *Seguidores:* ${followers}\n`;
+            info += `🔗 *Link:* ${link}\n\n`;
+            info += `> *Nota:* Info obtenida vía scraping para evitar errores de servidor.`;
+
+            if (profileImg) {
+                await conn.sendMessage(m.chat, { image: { url: profileImg }, caption: info }, { quoted: m });
+            } else {
+                await m.reply(info);
             }
 
         } catch (err) {
             console.error(err);
-            // Si sigue saliendo Bad Request, es probable que la versión de Baileys necesite actualizarse
-            m.reply(`*${config.visuals.emoji2}* \`Fallo Crítico\`\n\nDetalle: ${err.message}\n> Intenta actualizar Baileys si el error persiste.`);
+            m.reply(`*${config.visuals.emoji2}* \`Error de Red\`\n\nNo pude acceder a la web de WhatsApp.`);
         }
     }
 };
 
-export default reactCanalCommand;
+export default rcanalCommand;
