@@ -1,5 +1,7 @@
 import fetch from 'node-fetch';
 import yts from 'yt-search';
+import axios from 'axios';
+import { config } from '../config.js';
 
 const youtubeCommand = {
     name: 'play',
@@ -8,21 +10,22 @@ const youtubeCommand = {
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
-        if (!text) return m.reply(`*🤔 ¿Qué estás buscando?*\n*Ingrese el nombre o enlace de la canción*\n\n*Ejemplo:*\n${usedPrefix + commandName} emilia 420`);
+        if (!text) return m.reply(`*${config.visuals.emoji2}* \`Falta Texto o Enlace\` *${config.visuals.emoji2}*\n\nIngresa un nombre o un enlace de YouTube.`);
 
         try {
-            // 1. Búsqueda
+            // 1. Búsqueda con yt-search
             const yt_search = await yts(text);
             const video = yt_search.videos[0];
-            if (!video) return m.reply('*❁* `Sin Resultados` *❁*');
+            if (!video) return m.reply(`*${config.visuals.emoji2}* \`Sin Resultados\``);
 
-            const tipoDescarga = ['play', 'musica', 'audio', 'yta'].includes(commandName) ? 'audio' : 'video';
-            
-            // 2. Mensaje de espera (Caption estilo LoliBot pero con tus textos)
-            const infoBot = `┏━━━━✿︎ 𝐘𝐎𝐔𝐓𝐔𝐁𝐄 ✿︎━━━━╮
-┃ ✐ *Título:* ${video.title}
-┃ ✐ *Duración:* ${video.timestamp}
-┃ ✐ *Estado:* Enviando ${tipoDescarga}...
+            const isVideo = ['play2', 'video', 'playdoc2', 'ytv'].includes(commandName);
+            const type = isVideo ? 'VIDEO' : 'AUDIO';
+
+            // 2. Mensaje de espera con tus textos y config
+            const infoBot = `┏━━━━✿︎ 𝐘𝐎𝐔𝐓𝐔𝐁𝐄 ${type} ✿︎━━━━╮
+┃ ✐ *Título:* \`${video.title}\`
+┃ ✐ *Duración:* \`${video.timestamp}\`
+┃ ✐ *Estado:* \`Enviando archivo...\`
 ╰━━━━━━━━━━━━━━━━━━━╯`;
 
             await conn.sendMessage(m.chat, { 
@@ -30,15 +33,11 @@ const youtubeCommand = {
                 caption: infoBot 
             }, { quoted: m });
 
-            // 3. Lógica de APIs (Fallback)
-            // He dejado las APIs que no requieren librerías locales para que te funcione de una
-            const isVideo = ['play2', 'video', 'playdoc2', 'ytv'].includes(commandName);
-            const downloadType = isVideo ? 'video' : 'audio';
-
+            // 3. Lista de APIs de respaldo (Lógica Fallback)
             const apis = [
-                `https://api.siputzx.my.id/api/d/ytmp4?url=${video.url}`,
-                `https://api.zenkey.my.id/api/download/ytmp3?apikey=zenkey&url=${video.url}`,
-                `https://api.dorratz.com/v3/ytdl?url=${video.url}`
+                { url: `https://api.siputzx.my.id/api/d/ytmp4?url=${video.url}`, path: 'dl' },
+                { url: `https://api.zenkey.my.id/api/download/yt${isVideo ? 'mp4' : 'mp3'}?apikey=zenkey&url=${video.url}`, path: 'result.download.url' },
+                { url: `https://api.dorratz.com/v3/ytdl?url=${video.url}`, path: 'medias' }
             ];
 
             let mediaBuffer = null;
@@ -46,53 +45,59 @@ const youtubeCommand = {
 
             for (const api of apis) {
                 try {
-                    const res = await fetch(api);
-                    const data = await res.json();
-                    let dlUrl = data.dl || data.result?.download?.url || data.medias?.find(m => m.extension === (isVideo ? 'mp4' : 'mp3'))?.url;
+                    const res = await axios.get(api.url, { timeout: 15000 });
+                    let dlUrl = null;
+
+                    // Extracción dinámica según la API
+                    if (api.path === 'medias') {
+                        dlUrl = res.data.medias?.find(item => item.extension === (isVideo ? 'mp4' : 'mp3'))?.url;
+                    } else {
+                        // Acceso a propiedades anidadas (result.download.url)
+                        dlUrl = api.path.split('.').reduce((obj, key) => obj?.[key], res.data);
+                    }
 
                     if (dlUrl) {
-                        const fileRes = await fetch(dlUrl);
-                        if (fileRes.ok) {
-                            mediaBuffer = await fileRes.buffer();
-                            success = true;
-                            break;
-                        }
+                        const fileRes = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 60000 });
+                        mediaBuffer = Buffer.from(fileRes.data);
+                        success = true;
+                        break;
                     }
                 } catch (e) {
-                    console.log(`Fallo en API: ${api}`);
+                    console.log(`Fallo en API: ${api.url}`);
                     continue;
                 }
             }
 
-            if (!success) throw new Error("Todas las APIs fallaron");
+            if (!success) throw new Error("Fallback failed");
 
-            // 4. Envío de archivos (Documento o Multimedia)
+            // 4. Envío según el comando
             const isDoc = ['play3', 'play4', 'playdoc', 'playdoc2'].includes(commandName);
+            const commonOptions = { quoted: m, contextInfo: { mentionedJid: [m.sender] } };
 
             if (isDoc) {
                 await conn.sendMessage(m.chat, { 
                     document: mediaBuffer, 
                     mimetype: isVideo ? 'video/mp4' : 'audio/mpeg',
                     fileName: `${video.title}.${isVideo ? 'mp4' : 'mp3'}`,
-                    caption: `> Descargado por Kazuma Mister Bot`
-                }, { quoted: m });
+                    caption: `> Descargado por ${config.botName}`
+                }, commonOptions);
             } else if (isVideo) {
                 await conn.sendMessage(m.chat, { 
                     video: mediaBuffer, 
                     mimetype: 'video/mp4',
-                    caption: `🔰 Título: ${video.title}`
-                }, { quoted: m });
+                    caption: `*✿︎ Video:* \`${video.title}\`\n> Descargado por ${config.botName}`
+                }, commonOptions);
             } else {
                 await conn.sendMessage(m.chat, { 
                     audio: mediaBuffer, 
                     mimetype: 'audio/mpeg',
                     ptt: false
-                }, { quoted: m });
+                }, commonOptions);
             }
 
         } catch (error) {
             console.error(error);
-            m.reply('❌ No se pudo procesar la descarga con ninguna de las APIs disponibles.');
+            m.reply(`*${config.visuals.emoji2}* \`Error Crítico\` *${config.visuals.emoji2}*\n\nNo se pudo obtener el archivo de ninguna fuente.`);
         }
     }
 };
