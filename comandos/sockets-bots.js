@@ -11,6 +11,11 @@ export default {
 
     run: async (conn, m) => {
         try {
+            const botNumber = conn.user.id.split(':')[0];
+            const senderBot = m.id.startsWith('BAE5') || m.id.length < 20;
+            
+            if (m.key.fromMe) return;
+
             const mainSessionPath = path.resolve('./sesion_bot');
             const subSessionsPath = path.resolve('./sesiones_subbots');
             
@@ -23,7 +28,6 @@ export default {
             let mainBotLine = '';
             let mentions = [];
 
-            // 1. DETECTAR QUIÉN ES EL PRINCIPAL DESDE LOS ARCHIVOS
             if (await fs.pathExists(mainSessionPath)) {
                 const files = await fs.readdir(mainSessionPath);
                 const credsFile = files.find(f => f === 'creds.json');
@@ -33,13 +37,11 @@ export default {
                 }
             }
 
-            // Si el principal está en el grupo, lo listamos con el nombre del config
             if (mainBotNumber && participants.includes(mainBotNumber)) {
                 mainBotLine = `  ➪ *[Principal ${config.botName}]* » @${mainBotNumber}\n`;
                 mentions.push(`${mainBotNumber}@s.whatsapp.net`);
             }
 
-            // 2. DETECTAR SUBS EN EL GRUPO
             if (await fs.pathExists(subSessionsPath)) {
                 const folders = await fs.readdir(subSessionsPath);
 
@@ -49,7 +51,6 @@ export default {
 
                     const num = folder.replace(/\D/g, '');
                     
-                    // Solo si está en el grupo y NO es el principal detectado arriba
                     if (num && num !== mainBotNumber && participants.includes(num)) {
                         let subName = config.botName; 
                         const subSettingsPath = path.join(fullPath, 'settings.json');
@@ -70,9 +71,9 @@ export default {
                 }
             }
 
-            // 3. CONSTRUCCIÓN DEL MENSAJE
             const header = `*${config.visuals.emoji3}* \`LISTA DE SOCKETS ACTIVOS\` *${config.visuals.emoji3}*`;
-            const stats = `\n\n*❁ Principal » ${mainBotLine ? '1' : '0'}*\n*❀ Subs en este grupo » ${totalSubs}*\n\n*❀ EN ESTE GRUPO:*`;
+            const totalMostrados = (mainBotLine ? 1 : 0) + totalSubs;
+            const stats = `\n\n*❁ Principal » ${mainBotLine ? '1' : '0'}*\n*❀ Subs en este grupo » ${totalSubs}*\n\n*❀ En este grupo (${totalMostrados}):*`;
             
             const textoFinal = `${header}${stats}\n${mainBotLine}${subBotsList}\n\n> ¡Sistemas operativos y estables en esta comunidad!`;
 
@@ -86,7 +87,7 @@ export default {
             }, { quoted: m });
 
         } catch (e) {
-            console.error('Error en comando sockets:', e);
+            console.error(e);
             m.reply(`*${config.visuals.emoji2}* Error al filtrar los sockets.`);
         }
     }
