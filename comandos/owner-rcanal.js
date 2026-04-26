@@ -12,7 +12,7 @@ const rcanalCommand = {
         const linkMatch = text.match(/https:\/\/whatsapp\.com\/channel\/([a-zA-Z0-9]+)/);
         
         if (!linkMatch) {
-            return m.reply(`*${config.visuals.emoji2}* \`Formato Inválido\`\n\nUsa un enlace válido de canal.`);
+            return m.reply(`*${config.visuals.emoji2}* Proporciona un enlace válido.`);
         }
 
         const link = linkMatch[0];
@@ -21,23 +21,19 @@ const rcanalCommand = {
             const response = await fetch(link);
             const html = await response.text();
 
-            // Buscamos el nombre del canal
             const nameMatch = html.match(/<title>(.*?)<\/title>/);
             let name = nameMatch ? nameMatch[1].replace('WhatsApp Channel', '').trim() : 'No encontrado';
 
-            // Buscamos la cantidad de seguidores en la metadata
             const subsMatch = html.match(/([\d.,KMB]+)\sfollowers/i) || html.match(/([\d.,KMB]+)\sseguidores/i);
-            let followers = subsMatch ? subsMatch[1] : 'Oculto o no detectado';
+            let followers = subsMatch ? subsMatch[1] : 'Oculto';
 
-            // Buscamos la imagen de perfil del canal
             const imgMatch = html.match(/property="og:image" content="(.*?)"/);
             let profileImg = imgMatch ? imgMatch[1] : null;
 
-            let info = `📊 \`INFO DESDE LA WEB\` 📊\n\n`;
+            let info = `📊 *INFO DEL CANAL*\n\n`;
             info += `📝 *Nombre:* ${name}\n`;
             info += `👥 *Seguidores:* ${followers}\n`;
-            info += `🔗 *Link:* ${link}\n\n`;
-            info += `> *Nota:* Info obtenida vía scraping para evitar errores de servidor.`;
+            info += `🔗 *Link:* ${link}\n`;
 
             if (profileImg) {
                 await conn.sendMessage(m.chat, { image: { url: profileImg }, caption: info }, { quoted: m });
@@ -46,8 +42,7 @@ const rcanalCommand = {
             }
 
         } catch (err) {
-            console.error(err);
-            m.reply(`*${config.visuals.emoji2}* \`Error de Red\`\n\nNo pude acceder a la web de WhatsApp.`);
+            m.reply(`*${config.visuals.emoji2}* Error al conectar con la web.`);
         }
     }
 };
