@@ -18,12 +18,11 @@ export const pixelHandler = async (conn, m, config) => {
         const isGroup = chat.endsWith('@g.us');
 
         const type = Object.keys(m.message)[0];
-        const msg = m.message[type];
         const body = (type === 'conversation') ? m.message.conversation : 
                      (type === 'extendedTextMessage') ? m.message.extendedTextMessage.text : 
-                     (msg && msg.caption) ? msg.caption : '';
+                     (m.message[type] && m.message[type].caption) ? m.message[type].caption : '';
 
-        if (!body && !msg) return;
+        if (!body) return;
 
         let activePrefixes = config.allPrefixes || ['#', '!', '.'];
         if (fs.existsSync(prefixPath)) {
@@ -79,19 +78,12 @@ export const pixelHandler = async (conn, m, config) => {
 
         if (!global.db.data.chats[chat]) global.db.data.chats[chat] = { rolls: {} };
 
+        // Extraemos estas variables sin cambiar la estructura de ejecución principal
         const quoted = m.quoted ? m.quoted : m;
         const mime = (quoted.msg || quoted).mimetype || '';
 
-        await cmd.run(conn, m, { 
-            args, 
-            usedPrefix, 
-            command: commandName, 
-            text, 
-            quoted, 
-            mime,
-            isOwner,
-            isGroup
-        });
+        // Mantenemos tu orden original de argumentos para no romper los comandos
+        await cmd.run(conn, m, args, usedPrefix, commandName, text, { quoted, mime, isOwner, isGroup });
 
     } catch (err) {
         console.error(chalk.red('[ERROR PIXEL]'), err);
