@@ -24,12 +24,22 @@ const rwCommand = {
 
             let gachaDB = JSON.parse(fs.readFileSync(gachaPath, 'utf-8'));
             let ecoDB = JSON.parse(fs.readFileSync(ecoPath, 'utf-8'));
-            
+
             const saldo = ecoDB[user]?.wallet || 0;
-            let keys = Object.keys(gachaDB);
+            
+            let libres = Object.keys(gachaDB).filter(id => gachaDB[id].status === 'libre');
+            let domados = Object.keys(gachaDB).filter(id => gachaDB[id].status !== 'libre');
+
+            let keys;
+            if (domados.length > 0 && Math.random() <= 0.01) {
+                keys = domados;
+            } else {
+                keys = libres.length > 0 ? libres : Object.keys(gachaDB);
+            }
 
             if (saldo < 45000 && Math.random() > 0.05) {
-                keys = keys.filter(id => gachaDB[id].value < 40000);
+                let keysFiltradas = keys.filter(id => gachaDB[id].value < 40000);
+                if (keysFiltradas.length > 0) keys = keysFiltradas;
             }
 
             const randomId = keys[Math.floor(Math.random() * keys.length)];
@@ -54,7 +64,7 @@ const rwCommand = {
                 id: randomId, 
                 expiresAt: ahora + 60000 
             };
-            
+
             cooldowns.set(user, ahora);
 
         } catch (e) {
