@@ -13,35 +13,21 @@ const bratCommand = {
     run: async (conn, m, args) => {
         try {
             let text = args.join(' ');
-            if (!text) return m.reply(`*${config.visuals.emoji2}* \`Falta Texto\`\n\nEscribe el texto para el sticker.\n\n> Ejemplo: *brat Hola*`);
+            if (!text) return m.reply(`*${config.visuals.emoji2}* \`Falta Texto\``);
 
             const canvas = new Jimp(512, 512, 0xFFFFFFFF);
             const font = await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK);
-
-            const margin = 20;
-            const maxWidth = 512 - (margin * 2);
-            const maxHeight = 512 - (margin * 2);
-
-            canvas.print(
-                font,
-                margin,
-                margin,
-                {
-                    text: text,
-                    alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
-                    alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE
-                },
-                maxWidth,
-                maxHeight
-            );
+            canvas.print(font, 20, 20, {
+                text: text,
+                alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
+                alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE
+            }, 472, 472);
 
             const buffer = await canvas.getBufferAsync(Jimp.MIME_PNG);
-
-            const dynamicConfig = await getDynamicConfig(conn);
+            const dynamic = await getDynamicConfig(conn);
             let userName = m.pushName || 'User';
-
-            let pack = dynamicConfig.stickers.packname;
-            let author = dynamicConfig.stickers.packauthor.replace('(userName)', userName);
+            let pack = dynamic.stickers.packname;
+            let author = dynamic.stickers.packauthor.replace('@(userName)', userName);
 
             let sticker = new Sticker(buffer, {
                 pack: pack,
