@@ -15,7 +15,7 @@ const stickerCommand = {
             let mime = (q.msg || q).mimetype || q.mimetype || '';
 
             if (!/image|video|webp/.test(mime)) {
-                return m.reply(`*${config.visuals.emoji2}* \`Falta Multimedia\``);
+                return m.reply(`*${config.visuals.emoji2}* Debes ingresar responder a una imagen para crear el sticker.\n> ¡Se inteligente y mira el menú antes de ingresar comandos de manera random!`);
             }
 
             let img = await q.download();
