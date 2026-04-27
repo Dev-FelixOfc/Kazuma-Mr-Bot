@@ -24,6 +24,7 @@ import { pixelHandler } from './pixel.js';
 import { detectHandler } from './comandos/grupos-detect.js';
 import antiLinkHandler from './comandos/grupos-antilink.js';
 import { loadAllSubBots } from './sockets/index.js';
+import { loadAllMoodBots } from './sockets/SubMoods/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,7 +44,6 @@ global.db = {
 };
 
 global.loadCommands = async () => {
-    process.stdout.write(chalk.cyan('  [⚙️] Cargando módulos de comandos... '));
     const commandsPath = path.resolve(__dirname, 'comandos');
     if (!fs.existsSync(commandsPath)) fs.mkdirSync(commandsPath);
     global.commands.clear();
@@ -57,11 +57,8 @@ global.loadCommands = async () => {
             if (module.default && module.default.name) {
                 global.commands.set(module.default.name, module.default);
             }
-        } catch (e) {
-            console.log(chalk.red(`\n  [❌] Error en ${file}:`), e.message);
-        }
+        } catch (e) {}
     }
-    process.stdout.write(chalk.greenBright(`LISTO (${global.commands.size})\n`));
 };
 
 async function startBot() {
@@ -91,22 +88,17 @@ async function startBot() {
 
     try {
         detectHandler(conn);
-    } catch (e) {
-        console.error(chalk.red("  [❌] Error en Detector:"), e.message);
-    }
+    } catch (e) {}
 
     if (!conn.authState.creds.registered) {
         setTimeout(async () => {
-            let phoneNumber = "";
-            let input = await question(chalk.cyan('\n  [?] Introduce tu número (ej: 57350XXXXXXX):\n  > '));
-            phoneNumber = input.replace(/[^0-9]/g, '');
+            let input = await question(chalk.cyan('\n  [?] Introduce tu número:\n  > '));
+            let phoneNumber = input.replace(/[^0-9]/g, '');
             try {
                 let code = await conn.requestPairingCode(phoneNumber);
                 code = code?.match(/.{1,4}/g)?.join('-') || code;
                 console.log(chalk.black.bgCyan(`\n  CODIGO: ${code}  \n`));
-            } catch (error) {
-                console.error(chalk.red('  [!] Error:'), error.message);
-            }
+            } catch (error) {}
         }, 3000);
     }
 
@@ -120,6 +112,7 @@ async function startBot() {
         } else if (connection === 'open') {
             console.log(chalk.greenBright.bold('\n  [✨] ¡KAZUMA CONECTADO!'));
             await loadAllSubBots(conn);
+            await loadAllMoodBots(conn);
         }
     });
 
@@ -136,7 +129,7 @@ async function startBot() {
 
         const prefixes = config.allPrefixes || ['#', '!', '.'];
         const hasPrefix = prefixes.some(p => body.startsWith(p));
-        
+
         const isNoPrefixCmd = Array.from(global.commands.values()).some(cmd => 
             cmd.noPrefix && (
                 body.toLowerCase().startsWith(cmd.name.toLowerCase()) || 
