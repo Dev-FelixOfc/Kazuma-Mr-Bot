@@ -22,16 +22,18 @@ const pingCommand = {
             const end = Date.now();
             const latencia = end - start;
 
-            const botNumber = conn.user.id.split(':')[0];
-            const settingsPath = path.resolve(`./sesiones_subbots/${botNumber}/settings.json`);
-            
+            const botNumber = conn.user.id.split(':')[0].replace(/\D/g, '');
+            const subPath = path.resolve(`./sesiones_subbots/${botNumber}/settings.json`);
+            const moodPath = path.resolve(`./sesiones_moods/${botNumber}/settings.json`);
+
             let displayShortName = config.botName;
 
-            if (fs.existsSync(settingsPath)) {
-                const localData = await fs.readJson(settingsPath);
-                if (localData.shortName) {
-                    displayShortName = localData.shortName;
-                }
+            if (await fs.pathExists(subPath)) {
+                const localData = await fs.readJson(subPath);
+                if (localData.shortName) displayShortName = localData.shortName;
+            } else if (await fs.pathExists(moodPath)) {
+                const localData = await fs.readJson(moodPath);
+                if (localData.shortName) displayShortName = localData.shortName;
             }
 
             await conn.sendMessage(m.chat, { 
