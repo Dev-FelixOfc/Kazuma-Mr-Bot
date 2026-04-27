@@ -24,13 +24,19 @@ export default {
 
             const mainSessionPath = path.resolve('./sesion_bot');
             const subSessionsPath = path.resolve('./sesiones_subbots');
+            const moodSessionsPath = path.resolve('./sesiones_moods');
+            
             const groupMetadata = await conn.groupMetadata(m.chat);
             const participants = groupMetadata.participants.map(p => p.id.split('@')[0]);
 
             let mainBotNumber = '';
             let globalSubs = 0;
+            let globalMoods = 1; 
             let localSubs = 0;
+            let localMoods = 0;
+            
             let subBotsList = '';
+            let moodBotsList = '';
             let mainBotLine = '';
             let mentions = [];
 
@@ -45,11 +51,32 @@ export default {
             if (mainBotNumber && participants.includes(mainBotNumber)) {
                 mainBotLine = `  ➪ *[Mood ${config.botName}]* » @${mainBotNumber}\n`;
                 mentions.push(`${mainBotNumber}@s.whatsapp.net`);
+                localMoods++;
+            }
+
+            if (await fs.pathExists(moodSessionsPath)) {
+                const moodFolders = await fs.readdir(moodSessionsPath);
+                for (const folder of moodFolders) {
+                    const fullPath = path.join(moodSessionsPath, folder);
+                    if (!(await fs.stat(fullPath)).isDirectory() || folder.startsWith('.')) continue;
+
+                    const num = folder.replace(/\D/g, '');
+                    if (!num) continue;
+
+                    const hasCreds = await fs.pathExists(path.join(fullPath, 'creds.json'));
+                    if (hasCreds) {
+                        globalMoods++;
+                        if (num !== mainBotNumber && participants.includes(num)) {
+                            moodBotsList += `  ➪ *[Mood SubMood]* » @${num}\n`;
+                            mentions.push(`${num}@s.whatsapp.net`);
+                            localMoods++;
+                        }
+                    }
+                }
             }
 
             if (await fs.pathExists(subSessionsPath)) {
                 const folders = await fs.readdir(subSessionsPath);
-
                 for (const folder of folders) {
                     const fullPath = path.join(subSessionsPath, folder);
                     if (!(await fs.stat(fullPath)).isDirectory() || folder.startsWith('.')) continue;
@@ -81,13 +108,13 @@ export default {
             }
 
             const header = `*${config.visuals.emoji3}* \`LISTA DE SOCKETS ACTIVOS\` *${config.visuals.emoji3}*`;
-            const totalLocal = (mainBotLine ? 1 : 0) + localSubs;
-            
-            const stats = `\n\n*❁ Mood » ${mainBotNumber ? '1' : '0'}*\n*❀ Subs » ${globalSubs}*\n\n*❀ En este grupo (${totalLocal}):*`;
+            const totalLocal = localMoods + localSubs;
 
-            const textoFinal = `${header}${stats}\n${mainBotLine}${subBotsList}\n\n> ¡Sistemas operativos y estables en esta comunidad!`;
+            const stats = `\n\n*❁ Mood » ${globalMoods}*\n*❀ Subs » ${globalSubs}*\n\n*❀ En este grupo (${totalLocal}):*`;
 
-            if (!mainBotLine && !subBotsList) {
+            const textoFinal = `${header}${stats}\n${mainBotLine}${moodBotsList}${subBotsList}\n\n> ¡Sistemas operativos y estables en esta comunidad!`;
+
+            if (totalLocal === 0) {
                 return m.reply(`*${config.visuals.emoji2}* No hay sockets de mi sistema en este grupo.`);
             }
 
