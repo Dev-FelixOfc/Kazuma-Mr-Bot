@@ -1,5 +1,5 @@
 import { config } from '../config.js';
-import { configPriority } from '../config/config.js';
+import { getDynamicConfig } from '../config/config.js';
 import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 
 const stickerCommand = {
@@ -21,13 +21,11 @@ const stickerCommand = {
             let img = await q.download();
             if (!img) return m.reply(`*${config.visuals.emoji2}* Error al descargar.`);
 
+            const dynamicConfig = await getDynamicConfig(conn);
             let userName = m.pushName || 'User';
-            let botName = config.botName || 'Kazuma Bot';
 
-            let pack = configPriority.stickers.packname;
-            let author = configPriority.stickers.packauthor
-                .replace('(botName)', botName)
-                .replace('(userName)', userName);
+            let pack = dynamicConfig.stickers.packname;
+            let author = dynamicConfig.stickers.packauthor.replace('(userName)', userName);
 
             let sticker = new Sticker(img, {
                 pack: pack,
@@ -42,7 +40,6 @@ const stickerCommand = {
             await conn.sendMessage(m.chat, { sticker: buffer }, { quoted: m });
 
         } catch (e) {
-            console.error(e);
             m.reply(`*${config.visuals.emoji2}* Error interno.`);
         }
     }
