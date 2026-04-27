@@ -13,7 +13,7 @@ export default {
         try {
             const myJid = conn.user.id.split(':')[0].split(':')[0].replace(/\D/g, '');
             const databasePath = path.join(process.cwd(), 'jsons', 'preferencias.json');
-            
+
             if (fs.existsSync(databasePath)) {
                 const db = await fs.readJson(databasePath);
                 if (db[m.chat]) {
@@ -28,15 +28,15 @@ export default {
             const participants = groupMetadata.participants.map(p => p.id.split('@')[0]);
 
             let mainBotNumber = '';
-            let totalSubs = 0;
+            let globalSubs = 0;
+            let localSubs = 0;
             let subBotsList = '';
             let mainBotLine = '';
             let mentions = [];
 
             if (await fs.pathExists(mainSessionPath)) {
                 const files = await fs.readdir(mainSessionPath);
-                const credsFile = files.find(f => f === 'creds.json');
-                if (credsFile) {
+                if (files.find(f => f === 'creds.json')) {
                     const creds = await fs.readJson(path.join(mainSessionPath, 'creds.json'));
                     mainBotNumber = creds.me.id.split(':')[0].replace(/\D/g, '');
                 }
@@ -55,8 +55,12 @@ export default {
                     if (!(await fs.stat(fullPath)).isDirectory() || folder.startsWith('.')) continue;
 
                     const num = folder.replace(/\D/g, '');
-                    
-                    if (num && num !== mainBotNumber && participants.includes(num)) {
+                    if (!num) continue;
+
+                    const hasCreds = await fs.pathExists(path.join(fullPath, 'creds.json'));
+                    if (hasCreds) globalSubs++;
+
+                    if (num !== mainBotNumber && participants.includes(num)) {
                         let subName = config.botName; 
                         const subSettingsPath = path.join(fullPath, 'settings.json');
 
@@ -71,15 +75,16 @@ export default {
 
                         subBotsList += `  ➪ *[Sub ${subName}]* » @${num}\n`;
                         mentions.push(`${num}@s.whatsapp.net`);
-                        totalSubs++;
+                        localSubs++;
                     }
                 }
             }
 
             const header = `*${config.visuals.emoji3}* \`LISTA DE SOCKETS ACTIVOS\` *${config.visuals.emoji3}*`;
-            const totalMostrados = (mainBotLine ? 1 : 0) + totalSubs;
-            const stats = `\n\n*❁ Mood » ${mainBotLine ? '1' : '0'}*\n*❀ Subs en este grupo » ${totalSubs}*\n\n*❀ En este grupo (${totalMostrados}):*`;
+            const totalLocal = (mainBotLine ? 1 : 0) + localSubs;
             
+            const stats = `\n\n*❁ Mood » ${mainBotNumber ? '1' : '0'}*\n*❀ Subs Globales » ${globalSubs}*\n\n*❀ En este grupo (${totalLocal}):*`;
+
             const textoFinal = `${header}${stats}\n${mainBotLine}${subBotsList}\n\n> ¡Sistemas operativos y estables en esta comunidad!`;
 
             if (!mainBotLine && !subBotsList) {
