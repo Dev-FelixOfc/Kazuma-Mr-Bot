@@ -78,10 +78,26 @@ export const pixelHandler = async (conn, m, config) => {
             return m.reply(`*${config.visuals.emoji4}* \`SÓLO PARA GRUPOS\` *${config.visuals.emoji4}*\n\n> Este comando requiere una comunidad activa para ser ejecutado.`);
         }
 
-        const quoted = m.quoted ? m.quoted : m;
-        const mime = (quoted.msg || quoted).mimetype || '';
+        const subSessionsPath = path.resolve('./sesiones_subbots');
+        const moodSessionsPath = path.resolve('./sesiones_moods');
+        let sessionSettings = {};
 
-        await cmd.run(conn, m, args, usedPrefix, commandName, text, { quoted, mime, isOwner, isGroup });
+        const subPath = path.join(subSessionsPath, myJid, 'settings.json');
+        const moodPath = path.join(moodSessionsPath, myJid, 'settings.json');
+
+        if (fs.existsSync(subPath)) {
+            sessionSettings = JSON.parse(fs.readFileSync(subPath, 'utf-8'));
+        } else if (fs.existsSync(moodPath)) {
+            sessionSettings = JSON.parse(fs.readFileSync(moodPath, 'utf-8'));
+        }
+
+        global.dynamicBotConfig = {
+            botName: sessionSettings.shortName || config.botName || 'Kazuma',
+            botLongName: sessionSettings.longName || config.botName || 'Kazuma Bot',
+            botBanner: sessionSettings.banner || config.visuals.img1
+        };
+
+        await cmd.run(conn, m, args, usedPrefix, commandName, text);
 
     } catch (err) {
         console.error(chalk.red('[ERROR PIXEL]'), err);
