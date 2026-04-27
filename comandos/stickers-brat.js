@@ -1,5 +1,5 @@
 import { config } from '../config.js';
-import { configPriority } from '../config/config.js';
+import { getDynamicConfig } from '../config/config.js';
 import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 import Jimp from 'jimp';
 
@@ -37,12 +37,11 @@ const bratCommand = {
 
             const buffer = await canvas.getBufferAsync(Jimp.MIME_PNG);
 
+            const dynamicConfig = await getDynamicConfig(conn);
             let userName = m.pushName || 'User';
-            let botName = config.botName || 'Kazuma Bot';
-            let pack = configPriority.stickers.packname;
-            let author = configPriority.stickers.packauthor
-                .replace('(botName)', botName)
-                .replace('(userName)', userName);
+
+            let pack = dynamicConfig.stickers.packname;
+            let author = dynamicConfig.stickers.packauthor.replace('(userName)', userName);
 
             let sticker = new Sticker(buffer, {
                 pack: pack,
@@ -56,7 +55,6 @@ const bratCommand = {
             await conn.sendMessage(m.chat, { sticker: stikerBuffer }, { quoted: m });
 
         } catch (e) {
-            console.error(e);
             m.reply(`*${config.visuals.emoji2}* Error al crear el brat.`);
         }
     }
