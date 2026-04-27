@@ -28,16 +28,23 @@ const statusCommand = {
             const cpuModel = cpus[0].model.replace(/CPU|@|inc.|Processor|Core\(TM\)|i[0-9]-/g, '').trim();
             const cpuCores = cpus.length; 
 
-            const botNumber = conn.user.id.split(':')[0];
-            const settingsPath = path.resolve(`./sesiones_subbots/${botNumber}/settings.json`);
+            const botNumber = conn.user.id.split(':')[0].replace(/\D/g, '');
+            const subPath = path.resolve(`./sesiones_subbots/${botNumber}/settings.json`);
+            const moodPath = path.resolve(`./sesiones_moods/${botNumber}/settings.json`);
 
             let shortName = config.botName;
             let longName = config.botName;
 
-            if (fs.existsSync(settingsPath)) {
-                const localData = await fs.readJson(settingsPath);
-                if (localData.shortName) shortName = localData.shortName;
-                if (localData.longName) longName = localData.longName;
+            let settingsData = null;
+            if (await fs.pathExists(subPath)) {
+                settingsData = await fs.readJson(subPath);
+            } else if (await fs.pathExists(moodPath)) {
+                settingsData = await fs.readJson(moodPath);
+            }
+
+            if (settingsData) {
+                if (settingsData.shortName) shortName = settingsData.shortName;
+                if (settingsData.longName) longName = settingsData.longName;
             }
 
             const textoStatus = `*${config.visuals.emoji3}* \`SISTEMA ${longName.toUpperCase()}\` *${config.visuals.emoji3}*
