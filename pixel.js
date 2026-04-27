@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
-import { logger } from './config/print.js';
 
 const databasePath = path.join(process.cwd(), 'jsons', 'preferencias.json');
 const prefixPath = path.join(process.cwd(), 'jsons', 'prefix.json');
@@ -42,7 +41,7 @@ export const pixelHandler = async (conn, m, config) => {
         const myJid = conn.user.id.split('@')[0].split(':')[0].replace(/\D/g, '');
 
         if (isGroup) {
-            const comandosGestion = ['setprimary', 'delprimary', 'sockets', 'bots'];
+            const comandosGestion = ['setprimary', 'delprimary', 'sockets', 'bots', 'codemood'];
             if (!comandosGestion.includes(commandName)) {
                 if (fs.existsSync(databasePath)) {
                     let db = JSON.parse(fs.readFileSync(databasePath, 'utf-8'));
@@ -56,7 +55,7 @@ export const pixelHandler = async (conn, m, config) => {
 
         const args = body.trim().split(/ +/).slice(1);
         let text = args.join(' ');
-        
+
         if (!text && m.quoted && m.quoted.text) {
             text = m.quoted.text;
         }
@@ -65,19 +64,18 @@ export const pixelHandler = async (conn, m, config) => {
                     Array.from(global.commands.values()).find(c => c.alias && c.alias.includes(commandName));
 
         if (foundPrefix && !cmd) {
-            return m.reply(`*${config.visuals.emoji2}* El comando \`${usedPrefix}${commandName}\` no fue encontrado.\n> Para ver la lista de los comandos existentes usa el comando *${usedPrefix}help*`);
+            return m.reply(`*${config.visuals.emoji2}* El comando \`${usedPrefix}${commandName}\` no existe.\n> Usa *${usedPrefix}help*`);
         }
 
         if (!cmd) return;
         if (!foundPrefix && !cmd.noPrefix) return;
-        if (!isGroup && !isOwner && commandName !== 'code') return;
 
         if (cmd.isOwner && !isOwner) {
-            return m.reply(`*${config.visuals.emoji2}* \`ACCESO DENEGADO\``);
+            return m.reply(`*${config.visuals.emoji2}* \`ACCESO RESTRINGIDO\` *${config.visuals.emoji2}*\n\n> Esta función es exclusiva para los desarrolladores del sistema.`);
         }
 
         if (cmd.isGroup && !isGroup) {
-            return m.reply(`*${config.visuals.emoji2}* Solo en grupos.`);
+            return m.reply(`*${config.visuals.emoji4}* \`SÓLO PARA GRUPOS\` *${config.visuals.emoji4}*\n\n> Este comando requiere una comunidad activa para ser ejecutado.`);
         }
 
         const quoted = m.quoted ? m.quoted : m;
