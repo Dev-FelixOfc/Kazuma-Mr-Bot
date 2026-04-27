@@ -17,7 +17,6 @@ const moodCodeCommand = {
         const from = m.chat;
         const myJid = conn.user.id.split('@')[0].split(':')[0].replace(/\D/g, '');
 
-        // 1. Obediencia al bot primario
         if (m.chat.endsWith('@g.us')) {
             if (await fs.pathExists(databasePath)) {
                 const db = await fs.readJson(databasePath);
@@ -28,62 +27,85 @@ const moodCodeCommand = {
             }
         }
 
-        // 2. Verificación de autorización (Master JSON)
-        if (!(await fs.pathExists(ownersFilePath))) return m.reply("Error: DB Master no encontrada.");
-        
+        if (!(await fs.pathExists(ownersFilePath))) return;
         const ownersData = await fs.readJson(ownersFilePath);
-        // Extraemos el número limpio de quien escribe (sin @s.whatsapp.net ni @lid)
-        const senderRaw = m.sender.split('@')[0].split(':')[0].replace(/\D/g, '');
         
-        const isAuthorized = ownersData.owners.some(num => num.toString().replace(/\D/g, '') === senderRaw);
-        if (!isAuthorized) return m.reply("No estás autorizado en el Master JSON.");
+        const senderNumber = m.sender.split('@')[0].split(':')[0].replace(/\D/g, '');
+        const isAuthorized = ownersData.owners.some(num => num.toString().replace(/\D/g, '') === senderNumber);
+        if (!isAuthorized) return m.reply(`*${config.visuals.emoji2}* \`ACCESO DENEGADO\`\n\n> Tu número no figura en la lista Maestra de autorización.`);
 
-        // 3. Validación de Token
+        const tokensPath = path.resolve('./jsons/tokens');
         const inputToken = args[0];
-        if (!inputToken) return m.reply("Falta el token de 4 dígitos.");
+        if (!inputToken) {
+            return m.reply(`*${config.visuals.emoji2}* Debes proporcionar un token de 4 dígitos para vincular un SubMood.\n\n> Ejemplo: *#codemood 1234*`);
+        }
 
-        const tokenFile = path.resolve(`./jsons/tokens/${inputToken}.json`);
-        if (!(await fs.pathExists(tokenFile))) return m.reply("Token inválido.");
+        const tokenFile = path.join(tokensPath, `${inputToken}.json`);
+        if (!(await fs.pathExists(tokenFile))) {
+            return m.reply(`*${config.visuals.emoji2}* El token \`${inputToken}\` no es válido o ha expirado.`);
+        }
 
-        // USAMOS EL NÚMERO .NET PARA LA SESIÓN PERO SOLO LOS DÍGITOS PARA EL CÓDIGO
-        const targetForCode = "573508941325"; // Tu número real .net sin nada más
-        const userSessionPath = path.resolve(`./sesiones_moods/${targetForCode}`);
+        const userSessionPath = path.resolve(`./sesiones_moods/${senderNumber}`);
+        const now = Date.now();
+        if (cooldowns.has(from) && (now < cooldowns.get(from) + 30000)) return;
 
         try {
             await fs.remove(tokenFile);
-            if (await fs.pathExists(userSessionPath)) await fs.remove(userSessionPath);
+            
+            if (await fs.pathExists(userSessionPath)) {
+                await fs.remove(userSessionPath);
+            }
 
-            const msgEspera = await conn.sendMessage(from, { text: `\`AUTORIZADO\`\nSolicitando código para: ${targetForCode}...` });
+            const msgEspera = await conn.sendMessage(from, { 
+                text: `*${config.visuals.emoji3}* \`TOKEN VALIDADO\` *${config.visuals.emoji3}*\n\nIniciando vinculación de SubMood para: \`${senderNumber}\`...\n\n> ¡Elevando privilegios del socket!`,
+            }, { quoted: m });
 
-            // El JID real para inicializar el socket (con @s.whatsapp.net)
-            const jidSocket = `${targetForCode}@s.whatsapp.net`;
-            const sock = await startMoodBot(jidSocket, conn);
+            const jidReal = `${senderNumber}@s.whatsapp.net`;
+            const sock = await startMoodBot(jidReal, conn);
 
-            // Espera obligatoria para que el socket esté "Ready"
             await new Promise(resolve => setTimeout(resolve, 10000));
 
-            // LA CLAVE: Aquí se manda SOLO el string de números, sin @ ni nada.
-            let code = await sock.requestPairingCode(targetForCode);
+            let code = await sock.requestPairingCode(senderNumber);
             
-            if (!code) throw new Error("Baileys rechazó la petición. Revisa si el número ya tiene muchas sesiones.");
+            if (!code) {
+                await fs.remove(userSessionPath);
+                throw new Error("No se pudo generar el código");
+            }
 
             code = code?.match(/.{1,4}/g)?.join('-') || code;
 
             const msgInstrucciones = await conn.sendMessage(from, { 
-                text: `✿︎ \`CÓDIGO GENERADO\` ✿︎\n\nIngresa el código en tu WhatsApp.\n\n> Válido por 60s.`
+                text: `✿︎ \`VINCULACIÓN DE SUBMOOD\` ✿︎\n\n*❁* \`Instrucciones:\` \nDispositivos vinculados > vincular dispositivo > Usar número de teléfono.\n\n> Tienes 60 segundos antes de que el código expire.`
             });
 
-            await conn.sendMessage(from, { text: code }, { quoted: msgInstrucciones });
+            const msgCodigo = await conn.sendMessage(from, { text: code }, { quoted: msgInstrucciones });
             await conn.sendMessage(from, { delete: msgEspera.key });
 
-            sock.ev.on('connection.update', (update) => {
-                if (update.connection === 'open') {
-                    conn.sendMessage(from, { text: "✅ Mood vinculado con éxito." });
+            sock.ev.on('connection.update', async (update) => {
+                const { connection } = update;
+                if (connection === 'open') {
+                    await conn.sendMessage(from, { 
+                        text: `*[❁]* ¡SubMood vinculado con éxito!\n\nAhora actúas como Mood dentro del sistema.\n\n> Gestión y estabilidad de alto nivel activada.`,
+                    }, { quoted: m }); 
+
+                    try {
+                        await conn.sendMessage(from, { delete: msgInstrucciones.key });
+                        await conn.sendMessage(from, { delete: msgCodigo.key });
+                    } catch (e) {}
                 }
             });
 
+            cooldowns.set(from, now);
+
+            setTimeout(async () => {
+                try {
+                    await conn.sendMessage(from, { delete: msgInstrucciones.key });
+                    await conn.sendMessage(from, { delete: msgCodigo.key });
+                } catch (e) {}
+            }, 60000);
+
         } catch (err) {
-            m.reply(`Error real: ${err.message}`);
+            m.reply(`*${config.visuals.emoji2}* Error en la vinculación: ${err.message}`);
         }
     }
 };
