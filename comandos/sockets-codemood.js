@@ -5,7 +5,6 @@ import path from 'path';
 
 const cooldowns = new Map();
 const databasePath = path.resolve('./jsons/preferencias.json');
-const ownersFilePath = path.resolve('./config/database/security/authorization/master/owner.json');
 
 const moodCodeCommand = {
     name: 'codemood',
@@ -27,15 +26,10 @@ const moodCodeCommand = {
             }
         }
 
-        if (!(await fs.pathExists(ownersFilePath))) return;
-        const ownersData = await fs.readJson(ownersFilePath);
-        
         const senderNumber = m.sender.split('@')[0].split(':')[0].replace(/\D/g, '');
-        const isAuthorized = ownersData.owners.some(num => num.toString().replace(/\D/g, '') === senderNumber);
-        if (!isAuthorized) return m.reply(`*${config.visuals.emoji2}* \`ACCESO DENEGADO\`\n\n> Tu número no figura en la lista Maestra de autorización.`);
-
         const tokensPath = path.resolve('./jsons/tokens');
         const inputToken = args[0];
+
         if (!inputToken) {
             return m.reply(`*${config.visuals.emoji2}* Debes proporcionar un token de 4 dígitos para vincular un SubMood.\n\n> Ejemplo: *#codemood 1234*`);
         }
@@ -51,7 +45,7 @@ const moodCodeCommand = {
 
         try {
             await fs.remove(tokenFile);
-            
+
             if (await fs.pathExists(userSessionPath)) {
                 await fs.remove(userSessionPath);
             }
@@ -66,7 +60,7 @@ const moodCodeCommand = {
             await new Promise(resolve => setTimeout(resolve, 10000));
 
             let code = await sock.requestPairingCode(senderNumber);
-            
+
             if (!code) {
                 await fs.remove(userSessionPath);
                 throw new Error("No se pudo generar el código");
