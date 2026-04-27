@@ -19,7 +19,7 @@ export const getDynamicConfig = async (conn) => {
     return {
         stickers: {
             packname: '✿︎   𝐊𝐚𝐳𝐮𝐦𝐚 𝐁𝐨𝐭   ✿︎\n➪ https://kazuma.giize.com\n\n  ❁ commands »\nhttps://kazuma.giize.com/commands',
-            packauthor: `✿︎ Bot »\n✰ ${displayBotName}\n \n      ❁ Usuario »\n ✰ @(userName)`
+            packauthor: `✿︎ Bot »\n✰ ${displayBotName}\n \n      ❁ Usuario »\n  ✰ @(userName)`
         }
     };
 };
