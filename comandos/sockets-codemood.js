@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 import path from 'path';
 
 const cooldowns = new Map();
+const databasePath = path.resolve('./jsons/preferencias.json');
 
 const moodCodeCommand = {
     name: 'codemood',
@@ -13,9 +14,19 @@ const moodCodeCommand = {
 
     run: async (conn, m, args) => {
         const from = m.chat;
-        const moodSessionsPath = path.resolve('./sesiones_moods');
-        const tokensPath = path.resolve('./jsons/tokens');
+        const myJid = conn.user.id.split('@')[0].split(':')[0].replace(/\D/g, '');
 
+        if (m.isGroup) {
+            if (fs.existsSync(databasePath)) {
+                const db = await fs.readJson(databasePath);
+                if (db[from]) {
+                    const primaryNumber = db[from].replace(/\D/g, '');
+                    if (myJid !== primaryNumber) return;
+                }
+            }
+        }
+
+        const tokensPath = path.resolve('./jsons/tokens');
         const inputToken = args[0];
         if (!inputToken) {
             return m.reply(`*${config.visuals.emoji2}* Debes proporcionar un token de 4 dígitos para vincular un SubMood.\n\n> Ejemplo: *#codemood 1234*`);
@@ -27,12 +38,6 @@ const moodCodeCommand = {
         }
 
         const targetNumber = m.sender.split('@')[0].split(':')[0].replace(/\D/g, '');
-        const userSessionPath = path.join(moodSessionsPath, targetNumber);
-
-        if (await fs.pathExists(userSessionPath)) {
-            return m.reply(`*${config.visuals.emoji2}* \`Ya eres un Mood\`\n\nTu número ya cuenta con una sesión activa en el sistema de jerarquía.`);
-        }
-
         const now = Date.now();
         if (cooldowns.has(from) && (now < cooldowns.get(from) + 60000)) return;
 
@@ -84,7 +89,6 @@ const moodCodeCommand = {
             }, 60000);
 
         } catch (err) {
-            console.error(err);
             m.reply(`*${config.visuals.emoji2}* Error en la vinculación: ${err.message}`);
         }
     }
