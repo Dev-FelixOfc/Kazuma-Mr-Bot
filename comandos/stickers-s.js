@@ -1,4 +1,5 @@
 import { config } from '../config.js';
+import { getDynamicConfig } from '../config/config.js';
 import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 
 const stickerCommand = {
@@ -20,17 +21,16 @@ const stickerCommand = {
             let img = await q.download();
             if (!img) return m.reply(`*${config.visuals.emoji2}* Error al descargar.`);
 
+            const dynamic = await getDynamicConfig(conn);
             let userName = m.pushName || 'User';
-            let botName = global.dynamicBotConfig?.botName || config.botName || 'Kazuma';
-
-            let pack = '✿︎   𝐊𝐚𝐳𝐮𝐦𝐚 𝐁𝐨𝐭   ✿︎\n➪ https://kazuma.giize.com\n\n  ❁ commands »\nhttps://kazuma.giize.com/commands';
-            let author = `✿︎ Bot »\n✰ ${botName}\n \n      ❁ Usuario »\n   ✰ ${userName}`;
+            let pack = dynamic.stickers.packname;
+            let author = dynamic.stickers.packauthor.replace('@(userName)', userName);
 
             let sticker = new Sticker(img, {
                 pack: pack,
                 author: author,
                 type: StickerTypes.FULL,
-                categories: ['🤩', '🎉'],
+                categories: ['🤩'],
                 id: m.id,
                 quality: 70,
             });
