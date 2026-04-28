@@ -24,15 +24,21 @@ const hidetagCommand = {
                 if (mime) {
                     const content = await q.download();
                     let options = { mentions: participants };
-                    if (/image/.test(mime)) options.image = content;
-                    else if (/video/.test(mime)) options.video = content;
-                    else if (/sticker/.test(mime)) options.sticker = content;
-                    else if (/audio/.test(mime)) {
+
+                    if (/sticker/.test(mime)) {
+                        options.sticker = content;
+                    } else if (/image/.test(mime)) {
+                        options.image = content;
+                        options.caption = text || q.text || '';
+                    } else if (/video/.test(mime)) {
+                        options.video = content;
+                        options.caption = text || q.text || '';
+                    } else if (/audio/.test(mime)) {
                         options.audio = content;
                         options.mimetype = 'audio/mp4';
                         options.ptt = true;
                     }
-                    if (text || q.text) options.caption = text || q.text;
+
                     await conn.sendMessage(m.chat, options);
                 } else {
                     await conn.sendMessage(m.chat, { 
