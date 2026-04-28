@@ -1,4 +1,6 @@
 import { config } from '../config.js';
+import { getDynamicConfig } from '../config/config.js';
+import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 
 const hidetagCommand = {
     name: 'hidetag',
@@ -26,7 +28,21 @@ const hidetagCommand = {
                     let options = { mentions: participants };
 
                     if (/sticker/.test(mime)) {
-                        options.sticker = content;
+                        // Forzamos la conversión a sticker real con metadatos
+                        const dynamic = await getDynamicConfig(conn);
+                        const userName = m.pushName || 'User';
+                        const pack = dynamic.stickers.packname;
+                        const author = dynamic.stickers.packauthor.replace('@(userName)', userName);
+
+                        const sticker = new Sticker(content, {
+                            pack: pack,
+                            author: author,
+                            type: StickerTypes.FULL,
+                            categories: ['🤩'],
+                            quality: 70,
+                        });
+                        
+                        options.sticker = await sticker.toBuffer();
                     } else if (/image/.test(mime)) {
                         options.image = content;
                         options.caption = text || q.text || '';
