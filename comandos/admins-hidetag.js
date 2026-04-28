@@ -21,17 +21,26 @@ const hidetagCommand = {
             }
 
             if (q) {
-                await conn.sendMessage(m.chat, { 
-                    forward: q.fakeObj, 
-                    contextInfo: { 
-                        mentionedJid: participants 
-                    } 
-                }, { quoted: m });
+                const mime = (q.msg || q).mimetype || '';
+                
+                if (mime) {
+                    await conn.sendMessage(m.chat, { 
+                        forward: q.fakeObj, 
+                        contextInfo: { 
+                            mentionedJid: participants 
+                        } 
+                    });
+                } else {
+                    await conn.sendMessage(m.chat, { 
+                        text: text || q.text || '', 
+                        mentions: participants 
+                    });
+                }
             } else {
                 await conn.sendMessage(m.chat, { 
                     text: text, 
                     mentions: participants 
-                }, { quoted: m });
+                });
             }
 
         } catch (e) {
