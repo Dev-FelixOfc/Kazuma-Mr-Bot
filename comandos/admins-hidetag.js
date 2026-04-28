@@ -4,7 +4,7 @@ import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 
 const hidetagCommand = {
     name: 'hidetag',
-    alias: ['tag', 'mencion'],
+    alias: ['tag', 'mencion', 'notificar'],
     category: 'admins',
     isAdmin: true,
     isGroup: true,
