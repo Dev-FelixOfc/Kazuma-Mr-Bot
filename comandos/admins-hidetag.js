@@ -13,35 +13,40 @@ const hidetagCommand = {
             const groupMetadata = await conn.groupMetadata(m.chat);
             const participants = groupMetadata.participants.map(p => p.id);
 
-            let q = m.quoted ? m.quoted : m;
-            let mime = (q.msg || q).mimetype || '';
             let text = args.join(' ');
+            let q = m.quoted ? m.quoted : null;
 
-            if (!m.quoted && !text) {
-                return m.reply(`*${config.visuals.emoji2}* Responde a algo o escribe un texto para anunciar.\n\n> Ejemplo: *${usedPrefix}${commandName} ¡Hola!*`);
+            if (!q && !text) {
+                return m.reply(`*${config.visuals.emoji2}* Escribe el texto que deseas anunciar o responde a un mensaje.\n\n> Ejemplo: *${usedPrefix}${commandName} ¡Hola a todos!*`);
             }
 
-            if (m.quoted) {
-                let content = await m.quoted.download();
-                let messageOptions = { mentions: participants };
+            if (q) {
+                const mime = (q.msg || q).mimetype || '';
+                
+                if (mime) {
+                    const content = await q.download();
+                    let messageOptions = { mentions: participants };
 
-                if (/image/.test(mime)) messageOptions.image = content;
-                else if (/video/.test(mime)) messageOptions.video = content;
-                else if (/sticker/.test(mime)) messageOptions.sticker = content;
-                else if (/audio/.test(mime)) {
-                    messageOptions.audio = content;
-                    messageOptions.mimetype = 'audio/mp4';
-                    messageOptions.ptt = true;
-                }
-                else {
-                    messageOptions.text = m.quoted.text || '';
-                }
+                    if (/image/.test(mime)) messageOptions.image = content;
+                    else if (/video/.test(mime)) messageOptions.video = content;
+                    else if (/sticker/.test(mime)) messageOptions.sticker = content;
+                    else if (/audio/.test(mime)) {
+                        messageOptions.audio = content;
+                        messageOptions.mimetype = 'audio/mp4';
+                        messageOptions.ptt = true;
+                    }
 
-                if (m.quoted.text && !/sticker|audio/.test(mime)) {
-                    messageOptions.caption = m.quoted.text;
-                }
+                    if (q.text || text) {
+                        messageOptions.caption = text || q.text;
+                    }
 
-                await conn.sendMessage(m.chat, messageOptions);
+                    await conn.sendMessage(m.chat, messageOptions);
+                } else {
+                    await conn.sendMessage(m.chat, { 
+                        text: text || q.text || '', 
+                        mentions: participants 
+                    });
+                }
             } else {
                 await conn.sendMessage(m.chat, { 
                     text: text, 
@@ -50,6 +55,7 @@ const hidetagCommand = {
             }
 
         } catch (e) {
+            console.error(e);
             m.reply(`*${config.visuals.emoji2}* Error al procesar el tag.`);
         }
     }
