@@ -12,7 +12,6 @@ const hidetagCommand = {
         try {
             const groupMetadata = await conn.groupMetadata(m.chat);
             const participants = groupMetadata.participants.map(p => p.id);
-
             let text = args.join(' ');
             let q = m.quoted ? m.quoted : null;
 
@@ -22,14 +21,19 @@ const hidetagCommand = {
 
             if (q) {
                 const mime = (q.msg || q).mimetype || '';
-                
-                if (mime || q.isMedia) {
-                    await conn.sendMessage(m.chat, { 
-                        forward: q.fakeObj, 
-                        contextInfo: { 
-                            mentionedJid: participants 
-                        } 
-                    });
+                if (mime) {
+                    const content = await q.download();
+                    let options = { mentions: participants };
+                    if (/image/.test(mime)) options.image = content;
+                    else if (/video/.test(mime)) options.video = content;
+                    else if (/sticker/.test(mime)) options.sticker = content;
+                    else if (/audio/.test(mime)) {
+                        options.audio = content;
+                        options.mimetype = 'audio/mp4';
+                        options.ptt = true;
+                    }
+                    if (text || q.text) options.caption = text || q.text;
+                    await conn.sendMessage(m.chat, options);
                 } else {
                     await conn.sendMessage(m.chat, { 
                         text: text || q.text || '', 
@@ -42,7 +46,6 @@ const hidetagCommand = {
                     mentions: participants 
                 });
             }
-
         } catch (e) {
             m.reply(`*${config.visuals.emoji2}* Error al procesar el tag.`);
         }
