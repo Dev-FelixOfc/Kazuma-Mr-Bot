@@ -1,6 +1,4 @@
 import { config } from '../config.js';
-import { getDynamicConfig } from '../config/config.js';
-import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 
 const hidetagCommand = {
     name: 'hidetag',
@@ -19,54 +17,21 @@ const hidetagCommand = {
             let q = m.quoted ? m.quoted : null;
 
             if (!q && !text) {
-                return m.reply(`*${config.visuals.emoji2}* Responde a algo o escribe un texto para anunciar.\n\n> Ejemplo: *${usedPrefix}${commandName} ¡Hola!*`);
+                return m.reply(`*${config.visuals.emoji2}* Responde a un mensaje o escribe un texto.\n\n> Ejemplo: *${usedPrefix}${commandName} anuncio*`);
             }
 
             if (q) {
-                const mime = (q.msg || q).mimetype || '';
-                
-                if (/sticker/.test(mime)) {
-                    const dynamic = await getDynamicConfig(conn);
-                    const userName = m.pushName || 'User';
-                    const pack = dynamic.stickers.packname;
-                    const author = dynamic.stickers.packauthor.replace('@(userName)', userName);
-                    
-                    const content = await q.download();
-                    const sticker = new Sticker(content, {
-                        pack: pack,
-                        author: author,
-                        type: StickerTypes.FULL,
-                        categories: ['🤩'],
-                        quality: 70,
-                    });
-
-                    const buffer = await sticker.toBuffer();
-                    await conn.sendMessage(m.chat, { sticker: buffer, mentions: participants });
-                } else if (mime) {
-                    const content = await q.download();
-                    let messageOptions = { mentions: participants };
-
-                    if (/image/.test(mime)) messageOptions.image = content;
-                    else if (/video/.test(mime)) messageOptions.video = content;
-                    else if (/audio/.test(mime)) {
-                        messageOptions.audio = content;
-                        messageOptions.mimetype = 'audio/mp4';
-                        messageOptions.ptt = true;
-                    }
-
-                    if (text || q.text) messageOptions.caption = text || q.text;
-                    await conn.sendMessage(m.chat, messageOptions);
-                } else {
-                    await conn.sendMessage(m.chat, { 
-                        text: text || q.text || '', 
-                        mentions: participants 
-                    });
-                }
+                await conn.sendMessage(m.chat, { 
+                    forward: q.fakeObj, 
+                    contextInfo: { 
+                        mentionedJid: participants 
+                    } 
+                }, { quoted: m });
             } else {
                 await conn.sendMessage(m.chat, { 
                     text: text, 
                     mentions: participants 
-                });
+                }, { quoted: m });
             }
 
         } catch (e) {
