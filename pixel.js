@@ -42,9 +42,9 @@ export const pixelHandler = async (conn, m, config) => {
             ? body.slice(foundPrefix.length).trim().split(/ +/).shift().toLowerCase()
             : body.trim().split(/ +/).shift().toLowerCase();
 
-        if (!isGroup) {
+        if (!isGroup && !isRealOwner) {
             const allowedPrivateCmds = ['code', 'codemood', 'setname', 'setbanner'];
-            if (!isRealOwner && !allowedPrivateCmds.includes(commandName)) return; 
+            if (!allowedPrivateCmds.includes(commandName)) return; 
         }
 
         const myJid = conn.user.id.split('@')[0].split(':')[0].replace(/\D/g, '');
@@ -69,13 +69,20 @@ export const pixelHandler = async (conn, m, config) => {
         const cmd = global.commands.get(commandName) || 
                     Array.from(global.commands.values()).find(c => c.alias && c.alias.includes(commandName));
 
+        if (foundPrefix && !cmd) {
+            if (!isGroup && !isRealOwner) return;
+            return m.reply(`*${config.visuals.emoji2}* El comando \`${usedPrefix}${commandName}\` no fue encontrado.\n> Para ver mi lista completa de comandos usa:\n» *${usedPrefix}help*`);
+        }
+
         if (!cmd) return;
         if (!foundPrefix && !cmd.noPrefix) return;
 
-        if (cmd.isOwner && !isRealOwner && !isListedOwner) return;
+        if (cmd.isOwner && !isRealOwner && !isListedOwner) {
+            return m.reply(`*${config.visuals.emoji2}* \`ACCESO RESTRINGIDO\` *${config.visuals.emoji2}*\n\n> Esta función es exclusiva para los desarrolladores del sistema.`);
+        }
 
         if (cmd.isGroup && !isGroup) {
-            return m.reply(`*${config.visuals.emoji4}* Este comando es solo para grupos.`);
+            return m.reply(`*${config.visuals.emoji4}* \`SÓLO PARA GRUPOS\` *${config.visuals.emoji4}*\n\n> Este comando requiere una comunidad activa para ser ejecutado.`);
         }
 
         const subSessionsPath = path.resolve('./sesiones_subbots');
