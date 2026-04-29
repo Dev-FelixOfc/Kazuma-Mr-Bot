@@ -58,7 +58,7 @@ export const startMoodBot = async (userId, mainConn = null) => {
         if (connection === 'close') {
             const code = lastDisconnect?.error?.output?.statusCode;
             const shouldRestart = code !== DisconnectReason.loggedOut;
-            
+
             if (shouldRestart) {
                 setTimeout(() => startMoodBot(jid, mainConn), 5000);
             } else {
@@ -75,12 +75,31 @@ export const startMoodBot = async (userId, mainConn = null) => {
         let m = chatUpdate.messages[0];
         if (!m || !m.message) return;
 
+        m.chat = m.key.remoteJid;
+        m.sender = m.key.participant || m.key.remoteJid;
+        const isGroup = m.chat.endsWith('@g.us');
+
+        const realOwnerNumber = (typeof config.owner[0] === 'string' ? config.owner[0] : config.owner[0][0]).replace(/\D/g, '');
+        const senderNumber = m.sender.split('@')[0].replace(/\D/g, '');
+        const isRealOwner = senderNumber === realOwnerNumber || m.key.fromMe;
+
         const body = (
             m.message.conversation || 
             m.message.extendedTextMessage?.text || 
             m.message.imageMessage?.caption || 
             m.message.videoMessage?.caption || ""
         ).trim();
+
+        if (!isGroup && !isRealOwner) {
+            const prefixes = config.allPrefixes || ['#', '!', '.'];
+            const foundPrefix = prefixes.find(p => body.startsWith(p));
+            const commandName = foundPrefix 
+                ? body.slice(foundPrefix.length).trim().split(/ +/).shift().toLowerCase()
+                : body.trim().split(/ +/).shift().toLowerCase();
+
+            const allowedPrivateCmds = ['code', 'codemood', 'setname', 'setbanner'];
+            if (!allowedPrivateCmds.includes(commandName)) return;
+        }
 
         const prefixes = config.allPrefixes || ['#', '!', '.'];
         const hasPrefix = prefixes.some(p => body.startsWith(p));
@@ -93,9 +112,6 @@ export const startMoodBot = async (userId, mainConn = null) => {
         );
 
         if (m.key.fromMe && !hasPrefix && !isNoPrefixCmd) return;
-
-        m.chat = m.key.remoteJid;
-        m.sender = m.key.participant || m.key.remoteJid;
 
         if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = { rolls: {} };
 
