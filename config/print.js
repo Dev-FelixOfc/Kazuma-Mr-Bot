@@ -1,21 +1,23 @@
 import chalk from 'chalk';
+import { config } from '../config.js';
 
 export const logger = (m, conn) => {
     try {
         if (!m || !m.message || !m.key || m.key.remoteJid === 'status@broadcast') return;
 
-        const time = new Date().toLocaleTimeString('es-ES', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const from = m.key.remoteJid;
         const isGroup = from.endsWith('@g.us');
         const sender = isGroup ? (m.key.participant || from) : from;
-        const pushName = m.key.fromMe ? 'PIXEL-CREW (YO)' : (m.pushName || 'Usuario');
-        const number = sender ? sender.split('@')[0] : '000000';
+        const senderNumber = sender.split('@')[0].replace(/\D/g, '');
+        
+        const realOwnerNumber = (typeof config.owner[0] === 'string' ? config.owner[0] : config.owner[0][0]).replace(/\D/g, '');
+        const isRealOwner = senderNumber === realOwnerNumber || m.key.fromMe;
 
         const messageType = Object.keys(m.message).find(t => t !== 'senderKeyDistributionMessage' && t !== 'messageContextInfo') || '';
         if (!messageType || messageType === 'protocolMessage') return;
 
-        let content = '';
         const msg = m.message[messageType];
+        let content = '';
 
         if (messageType === 'conversation') {
             content = m.message.conversation;
@@ -32,6 +34,23 @@ export const logger = (m, conn) => {
         } else {
             content = `📦 [${messageType.replace('Message', '')}]`;
         }
+
+        if (!isGroup && !isRealOwner) {
+            const body = content.trim().toLowerCase();
+            const prefixes = config.allPrefixes || ['#', '!', '.'];
+            const foundPrefix = prefixes.find(p => body.startsWith(p));
+            
+            const commandName = foundPrefix 
+                ? body.slice(foundPrefix.length).trim().split(/ +/).shift()
+                : body.trim().split(/ +/).shift();
+
+            const allowedPrivateCmds = ['code', 'codemood', 'setname', 'setbanner'];
+            if (!allowedPrivateCmds.includes(commandName)) return;
+        }
+
+        const time = new Date().toLocaleTimeString('es-ES', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const pushName = m.key.fromMe ? 'PIXEL-CREW (YO)' : (m.pushName || 'Usuario');
+        const number = senderNumber;
 
         const chatLabel = isGroup ? chalk.black.bgMagenta(' GRUPO ') : chalk.black.bgCyan(' PRIVADO ');
         const timeLabel = chalk.gray(`[${time}]`);
