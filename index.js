@@ -120,6 +120,14 @@ async function startBot() {
         let m = chatUpdate.messages[0];
         if (!m.message) return;
 
+        m.chat = m.key.remoteJid;
+        m.sender = m.key.participant || m.key.remoteJid;
+        const isGroup = m.chat.endsWith('@g.us');
+
+        const realOwnerNumber = (typeof config.owner[0] === 'string' ? config.owner[0] : config.owner[0][0]).replace(/\D/g, '');
+        const senderNumber = m.sender.split('@')[0].replace(/\D/g, '');
+        const isRealOwner = senderNumber === realOwnerNumber || m.key.fromMe;
+
         const body = (
             m.message.conversation || 
             m.message.extendedTextMessage?.text || 
@@ -128,7 +136,17 @@ async function startBot() {
         ).trim();
 
         const prefixes = config.allPrefixes || ['#', '!', '.'];
-        const hasPrefix = prefixes.some(p => body.startsWith(p));
+        const foundPrefix = prefixes.find(p => body.startsWith(p));
+        const usedPrefix = foundPrefix || '';
+        
+        const commandName = foundPrefix 
+            ? body.slice(foundPrefix.length).trim().split(/ +/).shift().toLowerCase()
+            : body.trim().split(/ +/).shift().toLowerCase();
+
+        if (!isGroup && !isRealOwner) {
+            const allowedPrivateCmds = ['code', 'codemood', 'setname', 'setbanner'];
+            if (!allowedPrivateCmds.includes(commandName)) return;
+        }
 
         const isNoPrefixCmd = Array.from(global.commands.values()).some(cmd => 
             cmd.noPrefix && (
@@ -137,10 +155,7 @@ async function startBot() {
             )
         );
 
-        if (m.key.fromMe && !hasPrefix && !isNoPrefixCmd) return;
-
-        m.chat = m.key.remoteJid;
-        m.sender = m.key.participant || m.key.remoteJid;
+        if (m.key.fromMe && !foundPrefix && !isNoPrefixCmd) return;
 
         if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = { rolls: {} };
 
