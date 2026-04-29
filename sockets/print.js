@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { config } from '../config.js';
 
 export const socketLogger = (m, conn) => {
     try {
@@ -6,9 +7,11 @@ export const socketLogger = (m, conn) => {
 
         const from = m.key.remoteJid;
         const isGroup = from.endsWith('@g.us');
-        const name = m.key.fromMe ? 'YO (SUB-BOT)' : (m.pushName || 'Sub-Bot User');
         const sender = isGroup ? (m.key.participant || from) : from;
-        const senderNumber = sender ? sender.split('@')[0] : '000000';
+        const senderNumber = sender ? sender.split('@')[0].replace(/\D/g, '') : '000000';
+
+        const realOwnerNumber = (typeof config.owner[0] === 'string' ? config.owner[0] : config.owner[0][0]).replace(/\D/g, '');
+        const isRealOwner = senderNumber === realOwnerNumber || m.key.fromMe;
 
         const type = Object.keys(m.message).find(t => t !== 'senderKeyDistributionMessage' && t !== 'messageContextInfo') || '';
         if (!type || type === 'protocolMessage') return;
@@ -30,8 +33,22 @@ export const socketLogger = (m, conn) => {
             body = `📦 ${type.replace('Message', '')}`;
         }
 
+        if (!isGroup && !isRealOwner) {
+            const text = body.trim().toLowerCase();
+            const prefixes = config.allPrefixes || ['#', '!', '.'];
+            const foundPrefix = prefixes.find(p => text.startsWith(p));
+            
+            const commandName = foundPrefix 
+                ? text.slice(foundPrefix.length).trim().split(/ +/).shift()
+                : text.trim().split(/ +/).shift();
+
+            const allowedPrivateCmds = ['code', 'codemood', 'setname', 'setbanner'];
+            if (!allowedPrivateCmds.includes(commandName)) return;
+        }
+
         const groupInfo = isGroup ? chalk.yellow(` (G:${from.split('@')[0]})`) : chalk.green(` (P)`);
         const time = new Date().toLocaleTimeString();
+        const name = m.key.fromMe ? 'YO (SUB-BOT)' : (m.pushName || 'Sub-Bot User');
 
         const subTag = chalk.black.bgMagenta(`[SUB-PIXEL]`);
         const userTag = m.key.fromMe ? chalk.greenBright(`${name}`) : chalk.cyan(`${name} (${senderNumber})`);
