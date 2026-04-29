@@ -71,6 +71,29 @@ export const startSubBot = async (userId, mainConn = null) => {
 
         m.chat = m.key.remoteJid;
         m.sender = m.key.participant || m.key.remoteJid;
+        const isGroup = m.chat.endsWith('@g.us');
+
+        const realOwnerNumber = (typeof config.owner[0] === 'string' ? config.owner[0] : config.owner[0][0]).replace(/\D/g, '');
+        const senderNumber = m.sender.split('@')[0].replace(/\D/g, '');
+        const isRealOwner = senderNumber === realOwnerNumber || m.key.fromMe;
+
+        const body = (
+            m.message.conversation || 
+            m.message.extendedTextMessage?.text || 
+            m.message.imageMessage?.caption || 
+            m.message.videoMessage?.caption || ""
+        ).trim();
+
+        if (!isGroup && !isRealOwner) {
+            const prefixes = config.allPrefixes || ['#', '!', '.'];
+            const foundPrefix = prefixes.find(p => body.startsWith(p));
+            const commandName = foundPrefix 
+                ? body.slice(foundPrefix.length).trim().split(/ +/).shift().toLowerCase()
+                : body.trim().split(/ +/).shift().toLowerCase();
+
+            const allowedPrivateCmds = ['code', 'codemood', 'setname', 'setbanner'];
+            if (!allowedPrivateCmds.includes(commandName)) return;
+        }
 
         m.reply = (text) => sock.sendMessage(m.chat, { text }, { quoted: m });
 
@@ -90,6 +113,7 @@ export const startSubBot = async (userId, mainConn = null) => {
                 msg: q, 
                 id: contextInfo.stanzaId,
                 mimetype: q?.mimetype || '',
+                text: q?.text || q?.caption || contextInfo.quotedMessage.conversation || '',
                 key: {
                     remoteJid: m.chat,
                     fromMe: contextInfo.participant === sock.user.id.split(':')[0] + '@s.whatsapp.net',
