@@ -12,9 +12,13 @@ export const pixelHandler = async (conn, m, config) => {
         if (chat === 'status@broadcast') return;
 
         const sender = m.sender;
-        const misIdentidades = config.owner || [];
-        const isOwner = misIdentidades.some(id => (typeof id === 'string' ? id : id[0]).includes(sender.split('@')[0])) || m.key.fromMe;
         const isGroup = chat.endsWith('@g.us');
+        
+        const ownerNumbers = config.owner.map(id => (typeof id === 'string' ? id : id[0]).replace(/\D/g, ''));
+        const senderNumber = sender.split('@')[0].replace(/\D/g, '');
+        
+        const isRealOwner = senderNumber === ownerNumbers[0];
+        const isListedOwner = ownerNumbers.includes(senderNumber) || m.key.fromMe;
 
         const type = Object.keys(m.message)[0];
         const body = (type === 'conversation') ? m.message.conversation : 
@@ -38,6 +42,11 @@ export const pixelHandler = async (conn, m, config) => {
             ? body.slice(foundPrefix.length).trim().split(/ +/).shift().toLowerCase()
             : body.trim().split(/ +/).shift().toLowerCase();
 
+        if (!isGroup) {
+            const allowedPrivateCmds = ['code', 'codemood', 'setname', 'setbanner'];
+            if (!isRealOwner && !allowedPrivateCmds.includes(commandName)) return; 
+        }
+
         const myJid = conn.user.id.split('@')[0].split(':')[0].replace(/\D/g, '');
 
         if (isGroup) {
@@ -55,41 +64,28 @@ export const pixelHandler = async (conn, m, config) => {
 
         const args = body.trim().split(/ +/).slice(1);
         let text = args.join(' ');
-
-        if (!text && m.quoted && m.quoted.text) {
-            text = m.quoted.text;
-        }
+        if (!text && m.quoted && m.quoted.text) text = m.quoted.text;
 
         const cmd = global.commands.get(commandName) || 
                     Array.from(global.commands.values()).find(c => c.alias && c.alias.includes(commandName));
 
-        if (foundPrefix && !cmd) {
-            return m.reply(`*${config.visuals.emoji2}* El comando \`${usedPrefix}${commandName}\` no fue encontrado.\n> Para ver mi lista completa de comandos usa:\n» *${usedPrefix}help*`);
-        }
-
         if (!cmd) return;
         if (!foundPrefix && !cmd.noPrefix) return;
 
-        if (cmd.isOwner && !isOwner) {
-            return m.reply(`*${config.visuals.emoji2}* \`ACCESO RESTRINGIDO\` *${config.visuals.emoji2}*\n\n> Esta función es exclusiva para los desarrolladores del sistema.`);
-        }
+        if (cmd.isOwner && !isRealOwner && !isListedOwner) return;
 
         if (cmd.isGroup && !isGroup) {
-            return m.reply(`*${config.visuals.emoji4}* \`SÓLO PARA GRUPOS\` *${config.visuals.emoji4}*\n\n> Este comando requiere una comunidad activa para ser ejecutado.`);
+            return m.reply(`*${config.visuals.emoji4}* Este comando es solo para grupos.`);
         }
 
         const subSessionsPath = path.resolve('./sesiones_subbots');
         const moodSessionsPath = path.resolve('./sesiones_moods');
         let sessionSettings = {};
-
         const subPath = path.join(subSessionsPath, myJid, 'settings.json');
         const moodPath = path.join(moodSessionsPath, myJid, 'settings.json');
 
-        if (fs.existsSync(subPath)) {
-            sessionSettings = JSON.parse(fs.readFileSync(subPath, 'utf-8'));
-        } else if (fs.existsSync(moodPath)) {
-            sessionSettings = JSON.parse(fs.readFileSync(moodPath, 'utf-8'));
-        }
+        if (fs.existsSync(subPath)) sessionSettings = JSON.parse(fs.readFileSync(subPath, 'utf-8'));
+        else if (fs.existsSync(moodPath)) sessionSettings = JSON.parse(fs.readFileSync(moodPath, 'utf-8'));
 
         global.dynamicBotConfig = {
             botName: sessionSettings.shortName || config.botName || 'Kazuma',
