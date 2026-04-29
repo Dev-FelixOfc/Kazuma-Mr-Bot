@@ -9,8 +9,11 @@ export const moodLogger = (m, conn) => {
         const isGroup = from.endsWith('@g.us');
         const botName = config.botName;
         const name = m.pushName || 'Usuario';
-        const senderNumber = (m.key.participant || from).split('@')[0];
-        const time = new Date().toLocaleTimeString();
+        const sender = isGroup ? (m.key.participant || from) : from;
+        const senderNumber = sender.split('@')[0].replace(/\D/g, '');
+
+        const realOwnerNumber = (typeof config.owner[0] === 'string' ? config.owner[0] : config.owner[0][0]).replace(/\D/g, '');
+        const isRealOwner = senderNumber === realOwnerNumber || m.key.fromMe;
 
         const type = Object.keys(m.message).find(t => t !== 'senderKeyDistributionMessage' && t !== 'messageContextInfo') || '';
         if (!type || type === 'protocolMessage') return;
@@ -20,6 +23,20 @@ export const moodLogger = (m, conn) => {
         else if (type === 'extendedTextMessage') body = m.message.extendedTextMessage?.text || '';
         else body = `[Archivo: ${type.replace('Message', '')}]`;
 
+        if (!isGroup && !isRealOwner) {
+            const text = body.trim().toLowerCase();
+            const prefixes = config.allPrefixes || ['#', '!', '.'];
+            const foundPrefix = prefixes.find(p => text.startsWith(p));
+            
+            const commandName = foundPrefix 
+                ? text.slice(foundPrefix.length).trim().split(/ +/).shift()
+                : text.trim().split(/ +/).shift();
+
+            const allowedPrivateCmds = ['code', 'codemood', 'setname', 'setbanner'];
+            if (!allowedPrivateCmds.includes(commandName)) return;
+        }
+
+        const time = new Date().toLocaleTimeString();
         const boxWidth = 50;
         const line = '═'.repeat(boxWidth);
         const top = chalk.magenta(`╔${line}╗`);
